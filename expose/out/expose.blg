@@ -1,0 +1,56 @@
+This is BibTeX, Version 0.99d (TeX Live 2022/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: expose.aux
+The style file: ACM-Reference-Format.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: bibliography.bib
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--empty address in Houlsby2019
+You've used 10 entries,
+            5981 wiz_defined-function locations,
+            1557 strings with 20728 characters,
+and the built_in function-call counts, 11496 in all, are:
+= -- 1307
+> -- 418
+< -- 1
++ -- 141
+- -- 147
+* -- 854
+:= -- 1176
+add.period$ -- 55
+call.type$ -- 10
+change.case$ -- 81
+chr.to.int$ -- 10
+cite$ -- 11
+duplicate$ -- 1019
+empty$ -- 710
+format.name$ -- 179
+if$ -- 2647
+int.to.chr$ -- 2
+int.to.str$ -- 1
+missing$ -- 31
+newline$ -- 134
+num.names$ -- 70
+pop$ -- 382
+preamble$ -- 1
+purify$ -- 161
+quote$ -- 0
+skip$ -- 395
+stack$ -- 0
+substring$ -- 853
+swap$ -- 108
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 271
+warning$ -- 1
+while$ -- 64
+width$ -- 0
+write$ -- 255
+(There was 1 warning)

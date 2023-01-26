@@ -1,0 +1,186 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{10}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Alva-Manchego et~al\mbox{.}(2020)]%
+        {AlvaManchego2020}
+\bibfield{author}{\bibinfo{person}{Fernando Alva-Manchego},
+  \bibinfo{person}{Carolina Scarton}, {and} \bibinfo{person}{Lucia Specia}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Data-Driven Sentence Simplification: Survey and
+  Benchmark}.
+\newblock \bibinfo{journal}{\emph{Computational Linguistics}}
+  \bibinfo{volume}{46}, \bibinfo{number}{1} (\bibinfo{date}{November}
+  \bibinfo{year}{2020}), \bibinfo{pages}{135--187}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1162/coli_a_00370}
+\showDOI{\tempurl}
+
+
+\bibitem[Aumiller and Gertz(2022)]%
+        {Aumiller2022}
+\bibfield{author}{\bibinfo{person}{Dennis Aumiller} {and}
+  \bibinfo{person}{Michael Gertz}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \showarticletitle{Klexikon: {{A German Dataset}} for {{Joint
+  Summarization}} and {{Simplification}}}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the {{Thirteenth Language
+  Resources}} and {{Evaluation Conference}}}}. \bibinfo{publisher}{{European
+  Language Resources Association}}, \bibinfo{address}{{Marseille, France}},
+  \bibinfo{pages}{2693--2701}.
+\newblock
+
+
+\bibitem[Goldberg(2017)]%
+        {Goldberg2017}
+\bibfield{author}{\bibinfo{person}{Yoav Goldberg}.}
+  \bibinfo{year}{2017}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Neural Network Methods for Natural Language
+  Processing}}.
+\newblock Number~37 in \bibinfo{series}{Synthesis Lectures on Human Language
+  Technologies}. \bibinfo{publisher}{{Morgan \& Claypool Publishers}},
+  \bibinfo{address}{{San Rafael, Calif.}}
+\newblock
+\showISBNx{978-1-62705-298-6 978-1-68173-235-0}
+\urldef\tempurl%
+\url{https://doi.org/10.2200/S00762ED1V01Y201703HLT037}
+\showDOI{\tempurl}
+
+
+\bibitem[Houlsby et~al\mbox{.}(2019)]%
+        {Houlsby2019}
+\bibfield{author}{\bibinfo{person}{Neil Houlsby}, \bibinfo{person}{Andrei
+  Giurgiu}, \bibinfo{person}{Stanislaw Jastrzebski}, \bibinfo{person}{Bruna
+  Morrone}, \bibinfo{person}{Quentin {de Laroussilhe}}, \bibinfo{person}{Andrea
+  Gesmundo}, \bibinfo{person}{Mona Attariyan}, {and} \bibinfo{person}{Sylvain
+  Gelly}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{Parameter-{{Efficient Transfer Learning}} for
+  {{NLP}}}. In \bibinfo{booktitle}{\emph{International {{Conference}} on
+  {{Machine Learning}}}} \emph{(\bibinfo{series}{Proceedings of Machine
+  Learning Research}, Vol.~\bibinfo{volume}{97})}. \bibinfo{publisher}{PMLR},
+  \bibinfo{pages}{2790--2799}.
+\newblock
+
+
+\bibitem[Huggingface(2023)]%
+        {Huggingface2023}
+\bibfield{author}{\bibinfo{person}{Huggingface}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Huggingface - The AI community building the future}.
+\newblock \bibinfo{howpublished}{\url{https://huggingface.co/}}.
+\newblock
+\newblock
+\shownote{Accessed: 2023-01-22}.
+
+
+\bibitem[Jiang et~al\mbox{.}(2020)]%
+        {Jiang2020}
+\bibfield{author}{\bibinfo{person}{Chao Jiang}, \bibinfo{person}{Mounica
+  Maddela}, \bibinfo{person}{Wuwei Lan}, \bibinfo{person}{Yang Zhong}, {and}
+  \bibinfo{person}{Wei Xu}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Neural {{CRF Model}} for {{Sentence Alignment}} in
+  {{Text Simplification}}}. In \bibinfo{booktitle}{\emph{Proceedings of the
+  58th {{Annual Meeting}} of the {{Association}} for {{Computational
+  Linguistics}}}}. \bibinfo{publisher}{Association for Computational
+  Linguistics}, \bibinfo{address}{Online}, \bibinfo{pages}{7943--7960}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.18653/v1/2020.acl-main.709}
+\showDOI{\tempurl}
+
+
+\bibitem[Jurafsky and Martin(2023)]%
+        {Jurafsky2023}
+\bibfield{author}{\bibinfo{person}{Daniel Jurafsky} {and}
+  \bibinfo{person}{James~H. Martin}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Speech and {{Language Processing}} (3rd Ed. Draft)}.
+\newblock
+  \bibinfo{howpublished}{\url{https://web.stanford.edu/~jurafsky/slp3/}}.
+\newblock
+\newblock
+\shownote{Accessed: 2023-01-22}.
+
+
+\bibitem[Pfeiffer et~al\mbox{.}(2020)]%
+        {Pfeiffer2020}
+\bibfield{author}{\bibinfo{person}{Jonas Pfeiffer}, \bibinfo{person}{Andreas
+  R{\"u}ckl{\'e}}, \bibinfo{person}{Clifton Poth}, \bibinfo{person}{Aishwarya
+  Kamath}, \bibinfo{person}{Ivan Vuli{\'c}}, \bibinfo{person}{Sebastian Ruder},
+  \bibinfo{person}{Kyunghyun Cho}, {and} \bibinfo{person}{Iryna Gurevych}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{{{AdapterHub}}: {{A Framework}} for {{Adapting
+  Transformers}}}. In \bibinfo{booktitle}{\emph{Proceedings of the 2020
+  {{Conference}} on {{Empirical Methods}} in {{Natural Language Processing}}:
+  {{System Demonstrations}}}}. \bibinfo{publisher}{{Association for
+  Computational Linguistics}}, \bibinfo{address}{{Online}},
+  \bibinfo{pages}{46--54}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.18653/v1/2020.emnlp-demos.7}
+\showDOI{\tempurl}
+
+
+\bibitem[Pfeiffer et~al\mbox{.}(2023)]%
+        {Pfeiffer2023}
+\bibfield{author}{\bibinfo{person}{Jonas Pfeiffer}, \bibinfo{person}{Andreas
+  R\"uckl\'{e}}, \bibinfo{person}{Clifton Poth}, \bibinfo{person}{Aishwarya
+  Kamath}, \bibinfo{person}{Ivan Vuli\'{c}}, \bibinfo{person}{Sebastian Ruder},
+  \bibinfo{person}{Kyunghyun Cho}, {and} \bibinfo{person}{Iryna Gurevych}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{AdapterHub: A Framework for Adapting Transformers}.
+\newblock \bibinfo{howpublished}{\url{https://adapterhub.ml/}}.
+\newblock
+\newblock
+\shownote{Accessed: 2023-01-22}.
+
+
+\bibitem[S{\"a}uberli et~al\mbox{.}(2020)]%
+        {Saeuberli2020}
+\bibfield{author}{\bibinfo{person}{Andreas S{\"a}uberli},
+  \bibinfo{person}{Sarah Ebling}, {and} \bibinfo{person}{Martin Volk}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Benchmarking {{Data-driven Automatic Text
+  Simplification}} for {{German}}}. In \bibinfo{booktitle}{\emph{Proceedings of
+  the 1st {{Workshop}} on {{Tools}} and {{Resources}} to {{Empower People}}
+  with {{REAding DIfficulties}} ({{READI}})}}. \bibinfo{publisher}{{European
+  Language Resources Association}}, \bibinfo{address}{Marseille, France},
+  \bibinfo{pages}{41--48}.
+\newblock
+
+
+\end{thebibliography}

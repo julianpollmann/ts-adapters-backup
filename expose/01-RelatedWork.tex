@@ -1,0 +1,60 @@
+\section{Related Work}
+\subsection{Text Simplification}
+According to Alva-Manchego et. al ``Text Simplification (TS) is the task of modifying the content and structure of a text in order to
+make it easier to read and understand, while retaining its main idea and approximating its original meaning''.~\cite{AlvaManchego2020}
+The simplified version of a text can assist e.g. non-native speakers, children or non-expert readers in their reading ability.~\cite{AlvaManchego2020, Jiang2020}
+
+Text Simplification can be considered as a Sequence-to-Sequence Task, meaning a given input sequence of text can be mapped to an
+output sequence of text, where the output sequence is a simplified version of the input.~\cite{Goldberg2017}
+Therefore, some authors argue that TS is a monolingual translation task, where a complex input is translated into a simpler version.~\cite{Aumiller2022}
+In addition to Machine Translation, Text Summarization is closely related to the Text Simplification task.
+Most recent approaches to solve these Natural Language Processing (NLP) tasks are using Transformers, a deep-learning model based on an Encoder-Decoder architecture.
+To train these models large amounts of data is necessary, for which reason pre-trained transformer models are commonly fine-tuned to a specific task.
+%To train these models large parallel corpora are necessary.\cite{Jurafsky2023}\cite{AlvaManchego2020}
+Fine-tuning is done using large parallel corpora. In the case of fine-tuning a text simplification model a large set of complex-simple sentence or document pairs is used,
+depending on the granularity of the model to train.~\cite{Jurafsky2023} During training the Text Simplification model learns what modifications need to be made to transform a complex input into a simple one.
+The transformations done by a trained sentence Text Simplification model ``range from replacing complex words or phrases for simpler synonyms, to changing the
+syntactic structure of the sentence (e.g., splitting or reordering components)''.~\cite{AlvaManchego2020} This means that TS models can reduce 
+lexical and syntactic complexity and explain complex concepts.~\cite{Saeuberli2020}
+
+%TODO AUF ZEST PAPER eingehen!
+
+
+%Text Simplification can be considered as a Sequence-to-Sequence Task, meaning the input of the model is a sequence of text and
+%the output is a different sequence of text.\cite{Goldberg2017}
+
+
+%Encoder-Decoder architecture
+%Text Simplification is the task of modifying the content and structure of a text in order to make it easier 
+%* What is TS?
+%* What are Sequence-to-Sequence Tasks? Similiar to Machine Translation
+%monolingual translation task (KLexikon)
+
+%* Granularity of TS Approaches?
+%    KLexikon Approach: Do Summarization and Simplification in one step
+%* What requires TS? -> parallel corpora / alignments
+%* Text Transformations/Operations of TS
+%* How are Text Simplification Algorithms normally trained?
+
+%Text Simplification hat zum Ziel, einen Text dahingehend zu verändern, dass er einfacher zu lesen und zu verstehen ist.
+%The aim of Text Simplification is to modify a text so that it is easier to read and understand, while 
+%The goal of Text Simplification (TS) is to modify a text so that it is easier to read and understand without changing the meaning.
+
+
+
+\subsection{Adapters in the Transformer architecture}
+Fine-tuned models depend on very large amounts of data and their performance increases with their number of parameters.~\cite{Pfeiffer2020}
+This leads to models with billions of parameters, making it parameter inefficient.~\cite{Houlsby2019}
+Therefore every fine-tuned model fits only one NLP task, and it is expensive to save and distribute these models.
+This also makes composing different tasks more difficult.~\cite{Pfeiffer2020}
+Adapters avoid this issues by placing layers in between the layers of a deep-neural net in a pretrained model.
+The weights of the in between layers are updated during training phase, while the weights in the layers of the pretrained model stay unchanged.
+Accordingly sharing the parameter weights is easier, e.g. to use them for another task.~\cite{Houlsby2019}
+This makes Adapters suitable for transfer learning regard to different tasks or in cross-lingual contexts.
+Adapterhub is a framework for building and integrating Adapters for Transformer-based language models and is based on
+the Huggingface Transformers library.~\cite{Pfeiffer2023, Huggingface2023}
+
+%Adapters are a in between layer within (feed-forward) neural networks
+\subsection{Transfer Learning}
+As previously mentioned fine-tuned models are tailored towards a specific Task and/or language, e.g. Text Simplification. 
+% Can be applied to a different task and/or a different language
