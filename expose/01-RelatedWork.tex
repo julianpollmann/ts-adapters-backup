@@ -9,7 +9,7 @@ output sequence of text, where the output sequence is a simplified version of th
 Therefore, some authors argue that TS is a monolingual translation task, where a complex input is translated into a simpler version.~\cite{Aumiller2022}
 In addition to Machine Translation, Text Summarization is closely related to the Text Simplification task.
 Most recent approaches to solve these Natural Language Processing (NLP) tasks are using Transformers, a deep-learning model based on an Encoder-Decoder architecture.
-To train these models large amounts of data is necessary, for which reason pre-trained transformer models are commonly fine-tuned to a specific task.
+To train these models large amounts of data is necessary, for which reason pretrained transformer models are commonly fine-tuned to a specific task.
 %To train these models large parallel corpora are necessary.\cite{Jurafsky2023}\cite{AlvaManchego2020}
 Fine-tuning is done using large parallel corpora. In the case of fine-tuning a text simplification model a large set of complex-simple sentence or document pairs is used,
 depending on the granularity of the model to train.~\cite{Jurafsky2023} During training the Text Simplification model learns what modifications need to be made to transform a complex input into a simple one.
@@ -17,8 +17,23 @@ The transformations done by a trained sentence Text Simplification model ``range
 syntactic structure of the sentence (e.g., splitting or reordering components)''.~\cite{AlvaManchego2020} This means that TS models can reduce 
 lexical and syntactic complexity and explain complex concepts.~\cite{Saeuberli2020}
 
-%TODO AUF ZEST PAPER eingehen!
+\subsection{Transfer Learning for Text Simplification}
+As Mallinson et. al and Pfeiffer et. al pointed out, neural models need a very large amount of parallel data, which is available for some languages (like English)
+but unavailable for other languages (like German).~\cite{Mallinson2020, Pfeiffer2020}
+Mallinson et. al propose a Zero-Shot modeling framework, which makes use of existing parallel data in a high resource language
+and bilingual data for a low resource language. As they argue in their research, this can be used to transfer knowledge for simplification
+from this high resource language to the low resource language.
+This approach is based on an Encoder-Decoder architecture, where a shared base Encoder is combined with a task-specific Transformer layer.
+According to the authors this should ensure that the model learns task and language agnostic representations.
+language-specific Decoders are then used to generate an output in a certain language.
+%argue in their research, that by using existing complex-simple data in a high resource language like English
+% Nachteil Mallinson: task-specific transformer layer cannot be extracted
 
+
+%TODO AUF ZEST PAPER eingehen!
+% Gegenüberstellen von Autoren
+% Where XYZ focused on BLAH, it is remarkable that ABC rather points out that...
+% Next to this CDF is important to mention with his/her position BLAH.
 
 %Text Simplification can be considered as a Sequence-to-Sequence Task, meaning the input of the model is a sequence of text and
 %the output is a different sequence of text.\cite{Goldberg2017}
@@ -43,18 +58,22 @@ lexical and syntactic complexity and explain complex concepts.~\cite{Saeuberli20
 
 
 \subsection{Adapters in the Transformer architecture}
-Fine-tuned models depend on very large amounts of data and their performance increases with their number of parameters.~\cite{Pfeiffer2020}
-This leads to models with billions of parameters, making it parameter inefficient.~\cite{Houlsby2019}
-Therefore every fine-tuned model fits only one NLP task, and it is expensive to save and distribute these models.
+%As Pfeiffer et. al mentioned fine-tuned models depend on very large amounts of data and their performance increases with their number of parameters.~\cite{Pfeiffer2020}
+%This leads to models with billions of parameters, making it ``parameter inefficient''.~\cite{Houlsby2019} %Parameter inefficient?
+%Therefore every fine-tuned model fits only one NLP task, and it is expensive to save and distribute these models.
+The approach presented by Mallinson et. al is promising for transferring simplification knowledge. However, it is using task-specific
+Encoder Layers and language-specific Decoder layers, which makes extracting and sharing the knowledge difficult.
 This also makes composing different tasks more difficult.~\cite{Pfeiffer2020}
 Adapters avoid this issues by placing layers in between the layers of a deep-neural net in a pretrained model.
 The weights of the in between layers are updated during training phase, while the weights in the layers of the pretrained model stay unchanged.
-Accordingly sharing the parameter weights is easier, e.g. to use them for another task.~\cite{Houlsby2019}
+Accordingly, sharing the parameter weights is easier, e.g. to use them for another task.~\cite{Houlsby2019}
 This makes Adapters suitable for transfer learning regard to different tasks or in cross-lingual contexts.
-Adapterhub is a framework for building and integrating Adapters for Transformer-based language models and is based on
+As Zhao et. al point out, fully fine-tuning a model leads to better results than training adapters for the task of summarization.
+However, they describe that an adapter trained model for summarization performs better when data is scarce.~\cite{Zhao2022}
+A framework for building and integrating Adapters for Transformer-based language models is Adapterhub, which is based on
 the Huggingface Transformers library.~\cite{Pfeiffer2023, Huggingface2023}
 
 %Adapters are a in between layer within (feed-forward) neural networks
-\subsection{Transfer Learning}
-As previously mentioned fine-tuned models are tailored towards a specific Task and/or language, e.g. Text Simplification. 
+%\subsection{Transfer Learning}
+%As previously mentioned fine-tuned models are tailored towards a specific Task and/or language, e.g. Text Simplification. 
 % Can be applied to a different task and/or a different language

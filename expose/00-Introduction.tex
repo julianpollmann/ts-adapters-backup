@@ -1,12 +1,12 @@
 \section{Introduction}
 Machine Learning (ML) approaches for Natural Language Processing tasks like
 Text Simplification (TS) often require a large amount of data during training.
-Since in some languages more training data is available Machine Learning models
+Since in some languages more training data is available, Machine Learning models
 trained on this data can perform better than models trained on low resource languages.
 In this context one approach could be to take advantage of what a model from a high resource
 language learned and apply this to the domain of the low resource language, which is
 called Transfer Learning.
-Adapters for Transformer based architectures are a recent approach that promise to tackle this issue.
+Adapters for Transformer-based architectures are a recent approach that promise to tackle the issue of data sparsity.
 The aim of this master thesis is to investigate how suitable adapters are to solve this cross-lingual transfer
 and to examine potential drawbacks to this approach. 
 %They solve this by inserting own layers in between pretrained models and enhancing language and task transfer.
@@ -20,18 +20,19 @@ and to examine potential drawbacks to this approach.
 Recent developments in the field of Natural Language Processing (NLP), such as ChatGPT, have demonstrated the power of
 these tools. Machine Learning based approaches drive Tools for Chatbots, Machine Translation or Text Simplification, and 
 they have in common that they try to support humans in their tasks.
-Text Simplification, for example, aims to make a Text simpler and better to understand while preserving its meaning.
-Simplified Texts can assist users with reading difficulties, language learners or people with other challenges.
+Text Simplification, for example, aims to make a text simpler and better to understand while preserving its meaning.
+Simplified Texts can assist users who struggle with reading difficulties, language learners or people with other challenges.
 Models for Text Simplification are commonly created by fine-tuning a pretrained model with a large amount of textual data.
-But data for this kind of task is sparse and is even less available in low resource languages, like e.g. German.
+But data for this kind of task is sparse and is even less available in low resource languages, like e.g. German.~\cite{Rios2021}
 Manually creating this training data is costly and time-consuming and retraining in every language is very inefficient and slow.
+The following will point out the need for research in that domain.
 
 %Beginn: Er zieht die Aufmerksamkeit des Lesers durch die Schilderung des Ereignisses auf sich, das zu dem Problem geführt hat.
 %Hintergrundinformationen (Herstellung des Kontexts): Gehe tiefer auf das Ereignis ein, indem du mehr Informationen über es vermittelst und dabei auch den Rahmen deiner Forschung skizzierst.
 %Brücke zur Problemstellung: Erläutere, inwiefern es sich hierbei um ein Problem handelt, und schlage somit die Brücke zur Problemstellung, die deiner Untersuchung zu Grunde liegt.
 \subsection{Need for Research}
 One solution to tackle the data sparsity problem is to use transfer learning, where in the case of Text Simplification learnings from a high
-resource language can be transferred to a low resource language. Adapters for Transformer based architectures are a recent approach
+resource language can be transferred to a low resource language. Adapters for Transformer-based architectures are a recent approach
 that promise to enable this transfer and encapsulate the learnings for easier model sharing.
 Additionally they achieve performance similar to completely fine-tuned models on most tasks.~\cite{Pfeiffer2020}
 However it is questionable whether the quality of Text Simplifications with adapters is on par with that of fully fine-tuned models.
@@ -41,13 +42,15 @@ Therefore this thesis will investigate following aspects of adapters.
 \subsection{Research Questions}
 Given the previous undiscovered aspects of adapters following research questions could be made:
 
-\textbf{How effective are adapters for cross-lingual transfer on text simplification tasks?}
+\begin{itemize}
+    \item[] \textbf{How effective are adapters for cross-lingual transfer on text simplification tasks?}
+    \begin{itemize}
+        \item To what extent does the quality of text simplification differ between fine-tuned models and adapters?
+        \item How different is the quality of text simplification between a fine-tuned model and an adapter trained in a different language?
+        \item \emph{How efficient are adapters compared to fine-tuned models regarding their parameter size?}
+    \end{itemize}
+    \item[] \textbf{What are the shortcomings of using adapters as a way of cross-lingual transfer?}
+\end{itemize}
+%Effectivity has to be precised (Quality vs. )
 
-
-\begin{description}
-    \item[How effective are adapters for cross-lingual transfer on text simplification tasks?]
-    \item[What are the shortcomings of using adapters as a way of cross-lingual transfer?]
-\end{description}
-%Efficiency has to be precised (Quality vs. )
-
-% Is Text Simplification done by adapters 
+% There is no threshold 'when' a model is qualitatively/significant 'better' than another
