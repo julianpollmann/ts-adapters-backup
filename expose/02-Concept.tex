@@ -2,34 +2,32 @@
 
 \subsection{Datasets}
 To train both the fine-tuned approach and the adapter-based approach datasets are necessary.
-For the task of Text Simplification this is parallel data, meaning a pair of a complex text and it's simplified counterpart.
+For the task of text simplification this is parallel data, meaning a pair of a complex text and it's simplified counterpart.
 Table \ref{table:datasets} offers an overview of datasets that come into question as training data.
 
-\textbf{Newsela} consist of mostly English News articles in different levels of simplification.
-It contains the complex text and up to five simplified readability levels cultivated by professional authors.~\cite{AlvaManchego2020}
-Jiang et al. introduced alignments on sentence level for Newsela based on a Neural CRF model,
-meaning a pair of complex-simple sentences are given.~\cite{Jiang2020}
-%This is done by first manually aligning sentence pairs and then train the Neural CRF model to create automatic alignments.
+\textbf{Newsela} consist of mostly English news articles in different levels of simplification.
+It contains the complex text and up to five simplified readability levels cultivated by professional authors~\cite{Xu2015}.
+\citet{Jiang2020} manually labeled sentence alignments in the Newsela dataset ("Newsela Manual") to the train a neural CRF
+sentence alignment method. This model is then used to get complex and simple sentence pairs from the entire corpus of
+parallel documents ("Newsela Auto").
 Since the auto dataset is considerably larger this will be used for creating a baseline.
 
 \textbf{Klexikon} is a dataset for joint summarization and simplification and is created with semi-automated alignments between the German
-Wikipedia and a German encyclopedia for children. Since it's aligned between Wikipedia articles and entries of an encyclopedia, it is document based.~\cite{Aumiller2022}
+Wikipedia and a German encyclopedia for children. Since it's aligned between Wikipedia articles and entries of an encyclopedia, it is document based~\cite{Aumiller2022}.
 
-\textbf{GEOLino} contains data from a German general-interest children magazine, called GEOLino. Mallinson et. al used it in their research as a test-set,
-which was created manually by a trained linguist from 20 extracted articles.~\cite{Mallinson2020}
+\textbf{GEOLino} contains data from a German general-interest children magazine, called GEOLino. ~\citet{Mallinson2020} used it in their research as a test set,
+which was created manually by a trained linguist from 20 extracted articles.
 
 \textbf{TextComplexity} is a dataset consisting of sentences from Wikipedia, which were assessed as complex by German learners in level
 A and B. A native German speaker manually simplified 250 of these sentences and the simplifications were rated by the language learners
-regarding their simplicity.~\cite{Mallinson2020}
+regarding their simplicity~\cite{Mallinson2020}.
 
 \textbf{Cochrane} consists of text from the medical domain, extracted from the Cochrane Database of Systematic Reviews.
 These reviews are documents containing a technical (complex) and a plain language summary (simple) version.
-The simplified version is addressed to ``most readers without a university education'' and is written by review authors.~\cite{Devaraj2021}
-Both document versions are not aligned, however Devaraj et. al treat the paragraphs \emph{results}, \emph{discussion} and \emph{conclusion}
+The simplified version is addressed to ``most readers without a university education'' and is written by review authors~\cite{Devaraj2021}.
+Both document versions are not aligned, however ~\citet{Devaraj2021} treat the paragraphs \emph{results}, \emph{discussion} and \emph{conclusion}
 as parallel data.
 Also, every review is translated into multiple other languages.
-
-\the\textwidth
 
 \begin{table}[h!]
     \centering
@@ -39,50 +37,59 @@ Also, every review is translated into multiple other languages.
         \hline
         Dataset & Granularity & Language & \# Documents & \# Sent./Para. Pairs \\
         \hline
-        Newsela Auto & Doc/Sent & en/es & 1882 & 666,645 \\
-        Klexikon & Doc & de & 2898 & - \\
-        GEOLino & Sent & de & - & 663 \\
-        TextComplexity & Sent & de & - & 250 \\
-        Cochrane & Paragraph & multi & 8944 & - \\
+        Newsela Auto~\cite{Xu2015} & Doc/Sent & en/es & 1882 & 666,645 \\
+        Klexikon~\cite{Aumiller2022} & Doc & de & 2898 & - \\
+        GEOLino~\cite{Mallinson2020} & Sent & de & - & 663 \\
+        TextComplexity~\cite{Mallinson2020} & Sent & de & - & 250 \\
+        Cochrane~\cite{Devaraj2021} & Paragraph & multi & 8944 & - \\
         \hline
     \end{tabular}
-    \caption{Parallel Corpora for Text Simplification}
+    \caption{Parallel Corpora for Text Simplification\\
+        Corpora differ in their level of detail (Granularity; available on sentence, paragraph or document level)
+    }
     \label{table:datasets}
 \end{table}
 
 
-\subsection{Baseline Text Simplification models}
-To compare the performance of Adapters in Text Simplification a meaningful baseline is necessary.
+\subsection{Baseline Text Simplification models using English and German parallel data}
+To compare the performance of adapters in text simplification a meaningful baseline is necessary.
 Therefore, reference models should be trained by fine-tuning a pretrained model.
-As a pretrained model one option would be BART, since it's a Sequence-to-Sequence model
-built upon a bidirectional Encoder and an autoregressive Decoder.~\cite{Lewis2019}
-This makes it effective model when fine-tuned for text generation tasks.~\cite{Lewis2019}
+As a pretrained model one option would be BART, since it's a sequence-to-sequence model
+built upon a bidirectional encoder and an autoregressive decoder~\cite{Lewis2019}.
+This makes it effective model when fine-tuned for text generation tasks~\cite{Lewis2019}.
+For creating the baseline labeled data in the target language is necessary, meaning this includes a German dataset to compare against
+an adapter-based model which hasn't seen any German data.
 The fine-tuning process should be done using each of the datasets mentioned above,
 resulting in an English and a German fine-tuned TS model.
 Fine-tuning will be done using the Huggingface library, since it's offering an end-to-end
-integration of loading the pretrained model, training it, evaluating it and deploying the model.~\cite{Huggingface2023}
+integration of loading the pretrained model, training it, evaluating it and deploying the model~\cite{Huggingface2023}.
 Each of the fine-tuned models is then evaluated against a test set to see how this
 baseline performs.
 
-\subsection{Adapters for Text Simplification}
+\subsection{Adapters for Text Simplification without German data}
 After fully fine-tuning TS models with a pre-trained model as a baseline,
 Adapters for the desired tasks should be trained.
-To have a fair comparison between the baseline and the Adapters the same pretrained model
+To have a fair comparison between the baseline and the adapters the same pretrained model
 should be utilized, meaning the adapters will likely be trained on BART.
-Training the adapters could be done using Adapterhub, which is built on top of Huggingface.~\cite{Pfeiffer2023}
+Training the adapters could be done using Adapterhub, which is built on top of Huggingface~\cite{Pfeiffer2023}.
 To make use of the composable nature of adapters first the adapter for the TS task should be trained
-on an English dataset, namely Newsela.
-With a pretrained Language adapter for German from the Adapterhub the previously trained TS task adapter should be combined
+on an English dataset, namely Newsela Auto.
+With a pretrained language adapter for German from the Adapterhub the previously trained TS task adapter should be combined
 to then compare the results to a fully fine-tuned model.
-% Train Adapter for Task (Text Simplification)
-% Train Adapter for Language Transfer TODO MAD-X
+In this setup no German parallel data is involved during training the text simplification model. This condition will be used to then see how
+adapters perform compared to a fine-tuned model, which was trained using parallel data in the target language.
 
 
 \subsection{Evaluation}
 Both approaches, the fine-tuned and the adapter based models should be evaluated
-using common evaluation metrics for Text Simplification.
+using common evaluation metrics for text simplification.
 Automatic metrics should be used to for determine the similarity and the simplicity of the text.
-As a measurement for the similarity of the produced output and the testset, BLEU, TER and FKGL should be used.~\cite{AlvaManchego2020}
-Evaluation of simplicity of the produced text should be done by SARI.~\cite{AlvaManchego2020}
+As a measurement for the similarity of the produced output and the test set, BLEU, TER and FKGL should be used~\cite{AlvaManchego2020}.
+Evaluation of simplicity of the produced text should be done by SARI~\cite{AlvaManchego2020}.
 Automatic metrics are easy and cheaper to calculate, however it is questionable if they work properly for document level
-simplifications. Therefore when doing document level simplifications human evaluation might be a better approach.
+simplifications. Therefore, when doing document level simplifications human evaluation might be a better approach.
+Metrics for computational efficiency e.g., the number of parameters of a model, the computational time and flops during
+training and inference should be measured.
+To answer research question \ref{rq:1} and \ref{rq:2.1} automatic metrics should be used to evaluate. Research question \ref{rq:2.2} can be answered
+using metrics for computational efficiency. For research question \ref{rq:2.3} automatic metrics can be used, however it is unclear, if 
+sentence/paragraph level models are comparable with document level models using these metrics. Therefor, a human evaluation might be better fitting.

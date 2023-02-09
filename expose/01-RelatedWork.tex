@@ -1,31 +1,40 @@
 \section{Related Work}
 \subsection{Text Simplification}
-According to Alva-Manchego et. al ``Text Simplification (TS) is the task of modifying the content and structure of a text in order to
-make it easier to read and understand, while retaining its main idea and approximating its original meaning''.~\cite{AlvaManchego2020}
-The simplified version of a text can assist e.g. non-native speakers, children or non-expert readers in their reading ability.~\cite{AlvaManchego2020, Jiang2020}
+According to \citet{AlvaManchego2020} ``Text Simplification (TS) is the task of modifying the content and structure of a text in order to
+make it easier to read and understand, while retaining its main idea and approximating its original meaning''.
+The simplified version of a text can assist e.g., non-native speakers, children or non-expert readers in their reading ability~\cite{AlvaManchego2020, Jiang2020}.
 
-Text Simplification can be considered as a Sequence-to-Sequence Task, meaning a given input sequence of text can be mapped to an
-output sequence of text, where the output sequence is a simplified version of the input.~\cite{Goldberg2017}
-Therefore, some authors argue that TS is a monolingual translation task, where a complex input is translated into a simpler version.~\cite{Aumiller2022}
-In addition to Machine Translation, Text Summarization is closely related to the Text Simplification task.
-Most recent approaches to solve these Natural Language Processing (NLP) tasks are using Transformers, a deep-learning model based on an Encoder-Decoder architecture.
+Text simplification can be considered as a sequence-to-sequence task, meaning a given input sequence of text can be mapped to an
+output sequence of text, where the output sequence is a simplified version of the input~\cite{Goldberg2017}.
+Therefore, some authors argue that TS is a monolingual translation task, where a complex input is translated into a simpler version~\cite{Aumiller2022}.
+In addition to machine translation, text summarization is closely related to the text simplification task.
+Most recent approaches to solve these NLP tasks are using transformers, a deep-learning model based on an encoder-decoder architecture.
 To train these models large amounts of data is necessary, for which reason pretrained transformer models are commonly fine-tuned to a specific task.
-%To train these models large parallel corpora are necessary.\cite{Jurafsky2023}\cite{AlvaManchego2020}
-Fine-tuning is done using large parallel corpora. In the case of fine-tuning a text simplification model a large set of complex-simple sentence or document pairs is used,
-depending on the granularity of the model to train.~\cite{Jurafsky2023} During training the Text Simplification model learns what modifications need to be made to transform a complex input into a simple one.
-The transformations done by a trained sentence Text Simplification model ``range from replacing complex words or phrases for simpler synonyms, to changing the
-syntactic structure of the sentence (e.g., splitting or reordering components)''.~\cite{AlvaManchego2020} This means that TS models can reduce 
-lexical and syntactic complexity and explain complex concepts.~\cite{Saeuberli2020}
+Pretrained transformer models are commonly trained unsupervised with a very large amount of data, resulting in models containing billions of parameters.
+Fine-tuning is done using large parallel corpora, however compared to the pretrained model, these parallel corpora are quite small.
+A high quality parallel corpora for text simplification contains less e.g., only 1,6k documents but was created manually using approximately 1000 hours of
+professional work.
+In the case of fine-tuning a text simplification model a large set of complex-simple sentence or document pairs is used,
+depending on the granularity of the model to train~\cite{Jurafsky2023}.
+Granularity in this context is seen as the level of detail, ranging from sentence level, paragraph level or document level.
+\citet{Aumiller2022} argues that on simplification at document level summarization plays and important role.
+During training the text simplification model learns what modifications need to be made to transform a complex input into a simple one.
+The transformations done by a trained sentence text simplification model ``range from replacing complex words or phrases for simpler synonyms, to changing the
+syntactic structure of the sentence (e.g., splitting or reordering components)''~\cite{AlvaManchego2020}. This means that TS models can reduce 
+lexical and syntactic complexity and explain complex concepts~\cite{Saeuberli2020}.
 
 \subsection{Transfer Learning for Text Simplification}
-As Mallinson et. al and Pfeiffer et. al pointed out, neural models need a very large amount of parallel data, which is available for some languages (like English)
-but unavailable for other languages (like German).~\cite{Mallinson2020, Pfeiffer2020}
-Mallinson et. al propose a Zero-Shot modeling framework, which makes use of existing parallel data in a high resource language
-and bilingual data for a low resource language. As they argue in their research, this can be used to transfer knowledge for simplification
+As ~\citet{Mallinson2020} and ~\citet{Pfeiffer2020} pointed out, neural models need a very large amount of parallel data, which is available for some languages (like English)
+but unavailable for other languages (like German).
+\citet{Mallinson2020} propose a zero-shot modeling framework using a multi-task learning setup, which makes use of existing parallel data in a high resource language
+and bilingual translation data for a low resource language.
+As they argue in their research, this can be used to transfer knowledge for simplification
 from this high resource language to the low resource language.
-This approach is based on an Encoder-Decoder architecture, where a shared base Encoder is combined with a task-specific Transformer layer.
+This approach is based on an encoder-decoder architecture, where a shared base encoder is combined with a task-specific transformer layers.
+This task-specific transformer layer is trained on multiple tasks, namely \emph{simplification}, \emph{translation}, \emph{autoencoding} and \emph{language modeling}.
 According to the authors this should ensure that the model learns task and language agnostic representations.
-language-specific Decoders are then used to generate an output in a certain language.
+Language-specific decoders are then used to generate an output in a certain language.
+As described uses the approach of ~\citet{Mallinson2020} a setup of multiple tasks. However, this thesis will concentrate on an implementation with adapters.
 %argue in their research, that by using existing complex-simple data in a high resource language like English
 % Nachteil Mallinson: task-specific transformer layer cannot be extracted
 
@@ -62,16 +71,16 @@ language-specific Decoders are then used to generate an output in a certain lang
 %This leads to models with billions of parameters, making it ``parameter inefficient''.~\cite{Houlsby2019} %Parameter inefficient?
 %Therefore every fine-tuned model fits only one NLP task, and it is expensive to save and distribute these models.
 The approach presented by Mallinson et. al is promising for transferring simplification knowledge. However, it is using task-specific
-Encoder Layers and language-specific Decoder layers, which makes extracting and sharing the knowledge difficult.
-This also makes composing different tasks more difficult.~\cite{Pfeiffer2020}
-Adapters avoid this issues by placing layers in between the layers of a deep-neural net in a pretrained model.
-The weights of the in between layers are updated during training phase, while the weights in the layers of the pretrained model stay unchanged.
-Accordingly, sharing the parameter weights is easier, e.g. to use them for another task.~\cite{Houlsby2019}
-This makes Adapters suitable for transfer learning regard to different tasks or in cross-lingual contexts.
-As Zhao et. al point out, fully fine-tuning a model leads to better results than training adapters for the task of summarization.
-However, they describe that an adapter trained model for summarization performs better when data is scarce.~\cite{Zhao2022}
-A framework for building and integrating Adapters for Transformer-based language models is Adapterhub, which is based on
-the Huggingface Transformers library.~\cite{Pfeiffer2023, Huggingface2023}
+encoder layers and language-specific decoder layers, which makes extracting and sharing the knowledge difficult.
+This also makes composing different tasks more challenging~\cite{Pfeiffer2020}.
+Adapters avoid this issues by placing small bottleneck layers in between the layers of a deep-neural net in a pretrained model.
+The weights of the in between layers are updated during training, while the weights in the layers of the pretrained model stay unchanged.
+Accordingly, sharing the parameter weights is easier e.g., to use them for another task~\cite{Houlsby2019}.
+This makes adapters suitable for transfer learning regard to different tasks or in cross-lingual contexts.
+As ~\citet{Zhao2022} point out, fully fine-tuning a model leads to better results than training adapters for the task of summarization.
+However, they describe that an adapter trained model for summarization performs better when data is scarce.
+A framework for building and integrating adapters for transformer-based language models is Adapterhub, which is based on
+the Huggingface transformers library~\cite{Pfeiffer2023, Huggingface2023}.
 
 %Adapters are a in between layer within (feed-forward) neural networks
 %\subsection{Transfer Learning}
