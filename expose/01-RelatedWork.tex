@@ -76,6 +76,7 @@ This also makes composing different tasks more challenging~\cite{Pfeiffer2020}.
 Adapters avoid this issues by placing small bottleneck layers in between the layers of a deep-neural net in a pretrained model.
 The weights of the in between layers are updated during training, while the weights in the layers of the pretrained model stay unchanged.
 Accordingly, sharing the parameter weights is easier e.g., to use them for another task~\cite{Houlsby2019}.
+This enables also stacking of adapters, meaning combination of different adapters~\cite{PfeifferMAD2020}.
 This makes adapters suitable for transfer learning regard to different tasks or in cross-lingual contexts.
 As ~\citet{Zhao2022} point out, fully fine-tuning a model leads to better results than training adapters for the task of summarization.
 However, they describe that an adapter trained model for summarization performs better when data is scarce.

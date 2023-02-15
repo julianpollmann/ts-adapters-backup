@@ -61,10 +61,19 @@ For creating the baseline labeled data in the target language is necessary, mean
 an adapter-based model which hasn't seen any German data.
 The fine-tuning process should be done using each of the datasets mentioned above,
 resulting in an English and a German fine-tuned TS model.
+Figure \ref{fig:finetuning} gives an overview of the fine-tuning of the language model.
 Fine-tuning will be done using the Huggingface library, since it's offering an end-to-end
 integration of loading the pretrained model, training it, evaluating it and deploying the model~\cite{Huggingface2023}.
 Each of the fine-tuned models is then evaluated against a test set to see how this
 baseline performs.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{./figures/finetuning.jpg}
+    \caption{Fine-tuning a pretrained model using parallel copora}
+    \Description[Fine-tuning a pretrained model]{Fine-tuning a pretrained model}
+    \label{fig:finetuning}
+\end{figure}
 
 \subsection{Adapters for Text Simplification without German data}
 After fully fine-tuning TS models with a pre-trained model as a baseline,
@@ -78,7 +87,20 @@ With a pretrained language adapter for German from the Adapterhub the previously
 to then compare the results to a fully fine-tuned model.
 In this setup no German parallel data is involved during training the text simplification model. This condition will be used to then see how
 adapters perform compared to a fine-tuned model, which was trained using parallel data in the target language.
+Figure \ref{fig:adapters} shows the overall process of integrating a task adapter into a pretrained model, training it and using it combined
+with a language adapter during inference. Training the adapter is done using data only in a source language e.g., English in a 
+zero-shot setting and parallel data using a small amount of data in the target language e.g., German.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{./figures/adapter-setup.jpg}
+    \caption{Training and using a Task Adapter for Text Simplification. First the task adapter is initialized and inserted
+    into the pretrained model. The weights of the pretrained model are then frozen and the adapter weights are trained
+    using parallel corpora in English (in a zero-shot setting) and some German samples (in a few-shot setting).
+    During inference the extracted adapter is then used with a pretrained language adapter.}
+    \Description[Fine-tuning a pretrained model]{Fine-tuning a pretrained model}
+    \label{fig:adapters}
+\end{figure}
 
 \subsection{Evaluation}
 Both approaches, the fine-tuned and the adapter based models should be evaluated
