@@ -63,11 +63,18 @@ class Content:
         return pls
     
     def extract_pls_type(self, pls: str):
+        # If any paragraph has less than < 25 Chars -> also sectioned
+        pls_type = 'long'
+
+
         # determine the type of pls: "sectioned" or "long"
         if re.search(r"<p>(<i>)?<b>", str(pls)):
-            return 'sectioned'
-        else:
-            return 'long'
+            pls_type = 'sectioned'
+        
+        for para in pls('p'):
+            if len(para.get_text(strip=True)) < 25:
+                pls_type = 'sectioned'
+
         #pls_type = 'long'
 
         #if pls.find("b") is not None:
@@ -75,7 +82,7 @@ class Content:
         #else:
         #    pls_type = 'long'
 
-        #return pls_type
+        return pls_type
     
     def extract_pls(self, pls_type: str, pls: str):
         sections = []
@@ -85,35 +92,60 @@ class Content:
             heading_indices = []
             texts = []
 
+            has_non_bold_headings = False
             for para in pls("p"):
-                # Only process non empty p tags
-                if len(para.get_text(strip=True)) != 0:
-                    # Process subheadings, wrapped in bold tags
-                    if re.search(r"<p>(<i>)?<b>", str(para)):
-                    #if para.find("b") is not None:
-                        heading = self.get_text(para.find("b"))
-                        if heading[-1] == ':':
-                            heading = heading[:-1]
-                        texts.append(heading)
-                        heading_indices.append(len(texts)-1)
+                if len(para.get_text(strip=True)) < 25 and not re.search(r"<p>(<i>)?<b>", str(pls)):
+                    has_non_bold_headings = True
 
-                        #now grab text if there is some in the same paragraph as the heading
-                        text_list = list(para.strings)
-                        if len(text_list) > 1 and len(''.join(text_list[1:]).strip()) > 0:
-                            text = self.get_text_gen(text_list[1:])
-                            texts.append(text)
+            if has_non_bold_headings:
+                #sections = []
+                heading = ''
+
+                for para in pls('p'):
+                    if len(para.get_text(strip=True)) < 25:
+                        heading = self.get_text(para=para)
+                        sections.append({'heading': heading, 'text': ''})
                     else:
-                        texts.append(self.get_text(para))
+                        text = self.get_text(para=para)
 
-            #edge case, if there is text before the first heading
-            if heading_indices[0] > 0:
-                sections.append({'heading': '', 'text': '\n'.join(texts[:heading_indices[0]])})
-            
-            for i in range(len(heading_indices)-1):
-                sections.append({'heading': texts[heading_indices[i]], 'text': '\n'.join(texts[heading_indices[i]+1:heading_indices[i+1]])})
+                        for i, section in enumerate(sections):
+                            if section.get('heading') == heading:
+                                if not sections[i]['text']:
+                                    sections[i]['text'] = text
+                                else:
+                                    sections[i]['text'] = ' '.join([sections[i]['text'], text])
+                                break
+            else:
 
-            #we know that there is at least 1 heading, so no empty list check
-            sections.append({'heading': texts[heading_indices[-1]], 'text': '\n'.join(texts[heading_indices[-1]+1:])})
+                for para in pls("p"):
+                    # Only process non empty p tags
+                    if len(para.get_text(strip=True)) != 0:
+                        # Process subheadings, wrapped in bold tags
+                        if re.search(r"<p>(<i>)?<b>", str(para)):
+                        #if para.find("b") is not None:
+                            heading = self.get_text(para.find("b"))
+                            if heading[-1] == ':':
+                                heading = heading[:-1]
+                            texts.append(heading)
+                            heading_indices.append(len(texts)-1)
+
+                            #now grab text if there is some in the same paragraph as the heading
+                            text_list = list(para.strings)
+                            if len(text_list) > 1 and len(''.join(text_list[1:]).strip()) > 0:
+                                text = self.get_text_gen(text_list[1:])
+                                texts.append(text)
+                        else:
+                            texts.append(self.get_text(para))
+
+                #edge case, if there is text before the first heading
+                if heading_indices[0] > 0:
+                    sections.append({'heading': '', 'text': '\n'.join(texts[:heading_indices[0]])})
+                
+                for i in range(len(heading_indices)-1):
+                    sections.append({'heading': texts[heading_indices[i]], 'text': '\n'.join(texts[heading_indices[i]+1:heading_indices[i+1]])})
+
+                #we know that there is at least 1 heading, so no empty list check
+                sections.append({'heading': texts[heading_indices[-1]], 'text': '\n'.join(texts[heading_indices[-1]+1:])})
         else:
             text = [self.get_text(para) for para in pls("p")]
             sections.append('\n'.join(text))

@@ -62,6 +62,7 @@ class ArticleScraper():
     def scrape_content(self, articles: list):
         for i, json_article in enumerate(tqdm(articles)):
            if not json_article.get('content'):
+                print(f"### Scraping: {json_article.get('doi')}")
                 client = requests.Session()
                 client.headers.update(self.header)
 
@@ -70,7 +71,6 @@ class ArticleScraper():
                 # TODO get english lang, extract pls len and save on en language
                 # Compare in language loop with other languages, if equal -> use index based approach, otherwise based on tags
                 # in Content, different methods for languages
-
                 
                 for language, link in tqdm(article.language_links.items()):
                     try:
@@ -118,7 +118,6 @@ class ArticleScraper():
     def save_json(self, article: Article) -> None:
         with open(path.join(self.data_dir, self.json_dir, '%s.json' % article.doi.replace('/', '-')), 'w', encoding='utf-8') as f:
             json.dump(article.to_json(), f, ensure_ascii=False, indent=2)
-            #f.write(json.dumps(article.to_json(), indent=2))
 
     def save_merged_json(self) -> None:
         # now create single json file with all the articles

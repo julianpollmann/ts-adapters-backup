@@ -6,8 +6,6 @@ from os import makedirs, path
 from tqdm import tqdm
 
 class DoiScraper:
-
-    #data_dir = 'scraped_data'
     base_url = 'https://www.cochranelibrary.com/cdsr/reviews'
     dois = []
     filename = 'dois.txt'
