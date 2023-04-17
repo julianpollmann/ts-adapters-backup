@@ -65,19 +65,24 @@ def create_spacy_objects():
     nlp['th'] = nlp_th
 
     nlp_zh = spacy.load('zh_core_web_sm', exclude=["ner", "lemmatizer", "textcat"])
-    nlp['zh'] = nlp_zh
+    #nlp['zh'] = nlp_zh
+    nlp['zh_hans'] = nlp_zh
+    nlp['zh_hant'] = nlp_zh
 
     return nlp
 
-def replace_special_tokens(text: str) -> str:
+def replace_special_tokens(text: str, lang: str) -> str:
     # Fix newlines
     text = text.replace('\n', '[NWLNE]')
 
-    # Fix Number Seperators for correct sentence tokenization
-    # text = re.sub(r'(\d+)(\.)(\d+)', r'\g<1>[NMB SEP]\g<3>', text)
-
     # Fix Enumerations for correct sentence tokenization
     text = re.sub(r'((\s|\()\d)(\.)', r'\g<1>[ENUM]', text)
+
+    # Fix Number Seperators for correct sentence tokenization
+    if lang in ['zh_hans', 'zh_hant']:
+        text = re.sub(r'(\d+)(\.)?(\d+)?', r'[数字]', text) # 数字 = [NUMBER]
+    else:
+        text = re.sub(r'(\d+)(\.)(\d+)', r'\g<1>[NMB]\g<3>', text)
 
     return text
 
@@ -92,9 +97,9 @@ def get_sents(paragraphs: list, lang: str, nlp: str) -> list:
         if len(paragraphs) == 1:
             # Long paragraphs
             if isinstance(paragraphs[0], dict):
-                text = replace_special_tokens(paragraphs[0]['text'])
+                text = replace_special_tokens(paragraphs[0]['text'], lang=lang)
             else:
-                text = replace_special_tokens(paragraphs[0])
+                text = replace_special_tokens(paragraphs[0], lang=lang)
             
             doc = nlp(text)
             sents = list(doc.sents)
@@ -102,7 +107,7 @@ def get_sents(paragraphs: list, lang: str, nlp: str) -> list:
             # Multiple paragraphs
             spacy_para = []
             for para in paragraphs:
-                spacy_para.append(replace_special_tokens(para['text']))
+                spacy_para.append(replace_special_tokens(para['text'], lang=lang))
 
             for doc in nlp.pipe(spacy_para):
                 for sent in doc.sents:
@@ -111,15 +116,15 @@ def get_sents(paragraphs: list, lang: str, nlp: str) -> list:
         if len(paragraphs) == 1:
             # Long paragraphs
             if isinstance(paragraphs[0], dict):
-                text = replace_special_tokens(paragraphs[0]['text'])
+                text = replace_special_tokens(paragraphs[0]['text'], lang=lang)
             else:
-                text = replace_special_tokens(paragraphs[0])
+                text = replace_special_tokens(paragraphs[0], lang=lang)
             
             sents = sent_tokenize(text, language=map_nltk_lang(lang))
         else:
             # Multiple paragraphs
             for para in paragraphs:
-                text = replace_special_tokens(para['text'])
+                text = replace_special_tokens(para['text'], lang=lang)
 
                 for sent in sent_tokenize(text, language=map_nltk_lang(lang)):
                     sents.append(sent)
@@ -131,22 +136,34 @@ def write_sents(sents: list, doi: str, output_dir: str, part: str, lang: str) ->
         for sent in sents:
             f.write(str(sent) + '\n')
 
-def create_sent_files(data: list, output_dir: str) -> None:
+def create_sent_files(data: list, output_dir: str, lang: str) -> None:
     logger.info('Creating sentence files')
     nlps = create_spacy_objects()
 
     for article in tqdm(data):
-        for lang, content in article.get('content').items():
+        if lang:
             nlp = nlps.get(lang)
 
-            # TODO check if file already exists
-            abstract = content.get('abstract')
-            abstract_sents = get_sents(paragraphs=abstract, lang=lang, nlp=nlp)
-            write_sents(abstract_sents, doi=article.get('doi'), output_dir=output_dir, part='abstract', lang=lang)
+            if article.get('content').get(lang):
+                abstract = article.get('content').get(lang).get('abstract')
+                abstract_sents = get_sents(paragraphs=abstract, lang=lang, nlp=nlp)
+                write_sents(abstract_sents, doi=article.get('doi'), output_dir=output_dir, part='abstract', lang=lang)
 
-            pls = content.get('pls')
-            pls_sents = get_sents(paragraphs=pls, lang=lang, nlp=nlp)
-            write_sents(pls_sents, doi=article.get('doi'), output_dir=output_dir, part='pls', lang=lang)
+                pls = article.get('content').get(lang).get('pls')
+                pls_sents = get_sents(paragraphs=pls, lang=lang, nlp=nlp)
+                write_sents(pls_sents, doi=article.get('doi'), output_dir=output_dir, part='pls', lang=lang)
+        else:
+            for lang, content in article.get('content').items():
+                nlp = nlps.get(lang)
+
+                # TODO check if file already exists
+                abstract = content.get('abstract')
+                abstract_sents = get_sents(paragraphs=abstract, lang=lang, nlp=nlp)
+                write_sents(abstract_sents, doi=article.get('doi'), output_dir=output_dir, part='abstract', lang=lang)
+
+                pls = content.get('pls')
+                pls_sents = get_sents(paragraphs=pls, lang=lang, nlp=nlp)
+                write_sents(pls_sents, doi=article.get('doi'), output_dir=output_dir, part='pls', lang=lang)
 
 def create_overlaps(overlaps: int, output_dir: str) -> None:
     logger.info('Creatings overlaps')
@@ -185,7 +202,7 @@ def create_embeddings(files: list, encoder_model, doi_dir: str, part: str) -> No
             logger.error(e)
 
 def create_embedding_files(language: str, output_dir: str) -> None:
-    logger.info('Creatings Embeddings')
+    logger.info('Creating Embeddings')
 
     encoder_model = embed.SentenceEncoder(model_path=Path(path.join(laser_dir, 'laser2.pt')))
 
@@ -204,45 +221,49 @@ def create_embedding_files(language: str, output_dir: str) -> None:
         create_embeddings(pls_files, encoder_model=encoder_model, doi_dir=doi_dir, part='pls')
 
 def create_alignments(output_dir: str) -> None:
-    #./vecalign.py --alignment_max_size 8 --src bleualign_data/test*.de --tgt bleualign_data/test*.fr \
-    #--gold bleualign_data/test*.defr  \
-    #--src_embed bleualign_data/overlaps.de bleualign_data/overlaps.de.emb  \ ## CHECK!
-    #--tgt_embed bleualign_data/overlaps.fr bleualign_data/overlaps.fr.emb > /dev/null ## CHECK!
+    #./vecalign.py --alignment_max_size 8 --src bleualign_data/dev.de --tgt bleualign_data/dev.fr \
+    #--src_embed bleualign_data/overlaps.de bleualign_data/overlaps.de.emb  \
+    #--tgt_embed bleualign_data/overlaps.fr bleualign_data/overlaps.fr.emb
 
     args.alignment_max_size = 8
     args.one_to_many = None
     args.search_buffer_size = 5
+    args.del_percentile_frac = 0.2
+    args.max_size_full_dp = 300
+    args.costs_sample_size = 20000
+    args.num_samps_for_norm = 100
+    args.print_aligned_text = False
+    processing_type = 'abstract'
 
     for doi_dir in get_doi_dirs(output_dir=output_dir):
-        for file in listdir(path.join(doi_dir, 'overlaps')):
-            print('---')
-            # TODO GET all files except english
+        logger.info('Aligning DOI DIR "%s"', doi_dir)
+
+        # Read all overlaps files for processing type
+        embeddings = [f for f in listdir(path.join(doi_dir, 'embeddings')) if f.startswith(processing_type)]
+        overlaps = [f for f in listdir(path.join(doi_dir, 'overlaps')) if f.startswith(processing_type)]
+
+        for file in overlaps:
+        #for file in listdir(path.join(doi_dir, 'overlaps')):
             lang = file.split('.')[1]
 
             if lang != 'en':
-                # TODO CHECK if files in overlaps, sents, embeddings
+                logger.info('Aligning en to %s', lang)
 
-                # This is taken from vecalign.py
+                # TODO CHECK if files exists in overlaps, sents, embeddings
                 try:
-                    src_sent2line, src_line_embeddings = dp_utils.read_in_embeddings(f'{doi_dir}/overlaps/overlaps.en', f'{doi_dir}/embeddings/overlaps.en.emb')
-                    tgt_sent2line, tgt_line_embeddings = dp_utils.read_in_embeddings(f'{doi_dir}/overlaps/{file}', f'{doi_dir}/embeddings/overlaps.{lang}.emb')
-                except Exception as e:
-                    print(e)
-                    print(doi_dir)
+                    src_sent2line, src_line_embeddings = dp_utils.read_in_embeddings(f'{doi_dir}/overlaps/abstract_overlaps.en', f'{doi_dir}/embeddings/abstract_overlaps.en.emb')
+                    tgt_sent2line, tgt_line_embeddings = dp_utils.read_in_embeddings(f'{doi_dir}/overlaps/{file}', f'{doi_dir}/embeddings/abstract_overlaps.{lang}.emb')
 
-                src_max_alignment_size = 1 if args.one_to_many is not None else args.alignment_max_size
-                tgt_max_alignment_size = args.one_to_many if args.one_to_many is not None else args.alignment_max_size
+                    src_max_alignment_size = 1 if args.one_to_many is not None else args.alignment_max_size
+                    tgt_max_alignment_size = args.one_to_many if args.one_to_many is not None else args.alignment_max_size
 
-                width_over2 = ceil(max(src_max_alignment_size, tgt_max_alignment_size) / 2.0) + args.search_buffer_size
+                    width_over2 = ceil(max(src_max_alignment_size, tgt_max_alignment_size) / 2.0) + args.search_buffer_size
 
-                test_alignments = []
-                stack_list = []
-                src_file = f'{doi_dir}/sents/dev.en'
-                tgt_file = f'{doi_dir}/sents/dev.{lang}'
-                for src_file, tgt_file in zip(src_file, tgt_file):
-                    logger.info('Aligning src="%s" to tgt="%s"', src_file, tgt_file)
+                    stack_list = []
+                    src_file = f'{doi_dir}/sents/abstract.en'
+                    tgt_file = f'{doi_dir}/sents/abstract.{lang}'
 
-                    # TODO Fix this
+
                     src_lines = open(src_file, 'rt', encoding="utf-8").readlines()
                     vecs0 = dp_utils.make_doc_embedding(src_sent2line, src_line_embeddings, src_lines, src_max_alignment_size)
 
@@ -253,9 +274,8 @@ def create_alignments(output_dir: str) -> None:
                         final_alignment_types = dp_utils.make_one_to_many_alignment_types(args.one_to_many)
                     else:
                         final_alignment_types = dp_utils.make_alignment_types(args.alignment_max_size)
-                    logger.debug('Considering alignment types %s', final_alignment_types)
 
-                    stack = vecalign(vecs0=vecs0,
+                    stack = vecalign.vecalign(vecs0=vecs0,
                                     vecs1=vecs1,
                                     final_alignment_types=final_alignment_types,
                                     del_percentile_frac=args.del_percentile_frac,
@@ -263,14 +283,17 @@ def create_alignments(output_dir: str) -> None:
                                     max_size_full_dp=args.max_size_full_dp,
                                     costs_sample_size=args.costs_sample_size,
                                     num_samps_for_norm=args.num_samps_for_norm)
+                    
 
                     # write final alignments to stdout
                     dp_utils.print_alignments(stack[0]['final_alignments'], scores=stack[0]['alignment_scores'],
-                                    src_lines=src_lines if args.print_aligned_text else None,
-                                    tgt_lines=tgt_lines if args.print_aligned_text else None)
+                            src_lines=src_lines if args.print_aligned_text else None,
+                            tgt_lines=tgt_lines if args.print_aligned_text else None)
+                
+                except Exception as e:
+                    print(e)
+                    print(doi_dir)
 
-                    test_alignments.append(stack[0]['final_alignments'])
-                    stack_list.append(stack)
 
 def create_data_dirs(output_dir: str, data: list) -> None:
     logger.info('Creating data dirs')
@@ -284,7 +307,7 @@ def main(process: str, input_file: str, language: str, output_dir: str):
         data = load_data(input_file=input_file)
 
         create_data_dirs(output_dir=output_dir, data=data)
-        create_sent_files(data=data, output_dir=output_dir)
+        create_sent_files(data=data, output_dir=output_dir, lang=language)
 
     if process == 'overlaps':
         create_overlaps(overlaps=10, output_dir=output_dir)
@@ -295,10 +318,20 @@ def main(process: str, input_file: str, language: str, output_dir: str):
     if process == 'alignments':
         create_alignments(output_dir=output_dir)
 
+        """     data = load_data(input_file="./scraped_data/final_data/data_final.json")
+
+    languages = []
+    for item in data:
+        for lang, content in item.get('content').items():
+            if lang not in languages:
+                languages.append(lang)
+
+    print(languages) """
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser('Sentence alignment using vecalign', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("process", choices=["sents", "overlaps", "embeddings", "alignments"], help="Which process should be run)?")
-    parser.add_argument('--input_file', type=str, help='Input file containing list of Review dicts.')
+    parser.add_argument('--input_file', type=str, default='./scraped_data/data-sample.json', help='Input file containing list of Review dicts.')
     parser.add_argument('--output_dir', type=str, default='./data', help='Output directory.')
     parser.add_argument('--language', type=str, default=None, help='Which language should be aligned to english? Defaults to all languages.')
 
