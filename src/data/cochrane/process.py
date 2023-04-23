@@ -229,10 +229,10 @@ def res_heading(heading: str, language: str):
 
 
 def pls_length(article):
-    if article["pls_type"] == "long":
-        return len(article["pls"])
-    else:
-        return sum([len(x["text"]) for x in article["pls"]])
+    # if article["pls_type"] == "long":
+    #     return len(article["pls"][0]["text"])
+    # else:
+    return sum([len(x["text"]) for x in article["pls"]])
 
 
 # def truncate_abstracts(data: list, language: str) -> list:
@@ -311,10 +311,7 @@ def truncate_abstracts(data: list) -> list:
                     }
 
                     for index, section in enumerate(content.get("abstract")):
-                        if (
-                            keywords.get(language)
-                            in section.get("heading").strip().lower()
-                        ):
+                        if (keywords.get(language) in section.get("heading").strip().lower()):
                             first_lang_index = index
                             break
 
@@ -445,6 +442,9 @@ def add_paragraph_pos(data: list) -> list[dict]:
             for index, para in enumerate(content.get("abstract")):
                 para["pos"] = index
 
+            for index, para in enumerate(content.get("pls")):
+                para["pos"] = index
+
     return data
 
 def truncate_pls(data: list) -> list:
@@ -455,27 +455,28 @@ def truncate_pls(data: list) -> list:
         for lang, content in article.get("content").items():
             # LONG PLS
             if content["pls_type"] == "long":
-                para_count = len(content["pls"][0].strip().split("\n"))
+                pls_text = content["pls"][0]["text"]
+                para_count = len(pls_text.strip().split("\n"))
 
                 # LONG Single Paragraph
                 if para_count == 1:
                     content["pls_subtype"] = "single"
-                    content["pls"] = one_para_filter(text=content["pls"][0], language=lang)
+                    content["pls"][0]["text"] = one_para_filter(text=pls_text, language=lang)
                 
                 # LONG Multi Paragraphs
                 if para_count > 1:
                     content["pls_subtype"] = "multi"
 
                     first_index = -1
-                    for index, para in enumerate(content["pls"][0].strip().split("\n")):
+                    for index, para in enumerate(pls_text.strip().split("\n")):
                         if res_para(text=para, language=lang):
                             first_index = index
                             break
 
                     if first_index > -1:
-                        content["pls"] = "\n".join(content["pls"][0].strip().split("\n")[first_index:])
+                        content["pls"][0]["text"] = "\n".join(pls_text.strip().split("\n")[first_index:])
                     else:
-                        content["pls"] = ""
+                        content["pls"] = []
 
             # SECTIONED PLS
             if content["pls_type"] == "sectioned":
@@ -538,7 +539,7 @@ def reformat_pls(data: list) -> list:
     for article in data:
         for lang, content in article.get("content").items():
             if content["pls_type"] == "long":
-                article["content"][lang]["pls"] = [{"text": content["pls"]}]
+                article["content"][lang]["pls"] = [{"text": content["pls"][0]}]
 
     return data
 
@@ -568,12 +569,14 @@ def drop_small_sample_size(data: list) -> list:
 def clean_up_data(data_dir: str, lang: str):
     articles = json.load(open(path.join(data_dir, "data.json")))
 
-    # Remove articles without content
     articles = remove_articles_without_content(data=articles)
     articles = remove_empty_pls(data=articles)
 
     if lang:
         articles = filter_by_language(articles=articles, language=lang)
+
+    articles = reformat_pls(data=articles)
+    articles = add_paragraph_pos(data=articles)
 
     articles = truncate_abstracts(data=articles)
     articles = remove_short_abstracts(data=articles)
@@ -583,7 +586,6 @@ def clean_up_data(data_dir: str, lang: str):
 
     articles = trim_by_ratio(data=articles)
     articles = remove_articles_without_content(data=articles)
-    articles = reformat_pls(data=articles)
     articles = drop_small_sample_size(data=articles)
 
     languages = get_languages(articles=articles)
@@ -592,6 +594,7 @@ def clean_up_data(data_dir: str, lang: str):
     save_articles(data=articles)
 
     for lang, sorted_articles in languages.items():
+        print(f"Saving {lang} articles ({len(sorted_articles)} articles)")
         save_articles(data=sorted_articles, language=lang)
 
 if __name__ == "__main__":
