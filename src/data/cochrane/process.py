@@ -1,6 +1,7 @@
 import argparse
 import copy
 import json
+import random
 from os import path, makedirs
 from nltk.tokenize import sent_tokenize
 
@@ -398,14 +399,14 @@ def remove_empty_pls(data: list) -> list:
 
     return articles
 
-def save_articles(data: list, language: str = None) -> None:
-    if not path.exists(path.join("processed_data")):
-        makedirs(path.join("processed_data"))
+def save_articles(output_dir: str, data: list, language: str = None) -> None:
+    if not path.exists(path.join(output_dir)):
+        makedirs(path.join(output_dir))
 
     if language:
-        filename = path.join(f"processed_data/processed_data_{language}.json")
+        filename = path.join(f"{output_dir}/processed_data_{language}.json")
     else:
-        filename = path.join("processed_data/processed_data.json")
+        filename = path.join(f"{output_dir}/processed_data.json")
 
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -566,7 +567,7 @@ def drop_small_sample_size(data: list) -> list:
 
     return data
 
-def clean_up_data(data_dir: str, lang: str):
+def clean_up_data(data_dir: str, lang: str, output_dir: str, sample: int):
     articles = json.load(open(path.join(data_dir, "data.json")))
 
     articles = remove_articles_without_content(data=articles)
@@ -574,6 +575,9 @@ def clean_up_data(data_dir: str, lang: str):
 
     if lang:
         articles = filter_by_language(articles=articles, language=lang)
+
+    if sample:
+        articles = random.sample(articles, sample)
 
     articles = reformat_pls(data=articles)
     articles = add_paragraph_pos(data=articles)
@@ -586,37 +590,26 @@ def clean_up_data(data_dir: str, lang: str):
 
     articles = trim_by_ratio(data=articles)
     articles = remove_articles_without_content(data=articles)
-    articles = drop_small_sample_size(data=articles)
+
+    if not sample:
+        articles = drop_small_sample_size(data=articles)
 
     languages = get_languages(articles=articles)
     languages = sort_articles_into_languages(articles=articles, languages=languages)
 
-    save_articles(data=articles)
+    save_articles(output_dir=output_dir, data=articles)
 
     for lang, sorted_articles in languages.items():
         print(f"Saving {lang} articles ({len(sorted_articles)} articles)")
-        save_articles(data=sorted_articles, language=lang)
+        save_articles(output_dir=output_dir, data=sorted_articles, language=lang)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="Cochrane Scraper", description="Scraper for Cochrane reviews"
-    )
-    parser.add_argument(
-        "--type",
-        type=str,
-        nargs=1,
-        default="dois",
-        help="Which data type should be scraped (dois or reviews?)",
-    )
-    parser.add_argument(
-        "--dois", type=str, nargs=1, default="dois", help="Path of filelist with dois"
-    )
-    parser.add_argument(
-        "--language", type=str, help="Language to process",
-    )
-    parser.add_argument(
-        "--data_dir", type=str, default="./scraped_data", help="Directory of scraped data"
-    )
+    parser = argparse.ArgumentParser(prog="Cochrane Preprocessing", description="Preprocessing Cochrane Data")
+    parser.add_argument("--sample", type=int, help="Path of filelist with dois")
+    parser.add_argument("--language", type=str, help="Language to process",)
+    parser.add_argument("--data_dir", type=str, default="./scraped_data", help="Directory of scraped data")
+    parser.add_argument("--output_dir", type=str, default="./processed_data", help="Output directory")
+
     args = parser.parse_args()
 
-    clean_up_data(data_dir=args.data_dir, lang=args.language)
+    clean_up_data(data_dir=args.data_dir, lang=args.language, output_dir=args.output_dir, sample=args.sample)
