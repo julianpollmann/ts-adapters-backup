@@ -448,10 +448,10 @@ def add_paragraph_pos(data: list) -> list[dict]:
     for article in data:
         for content in article.get("content").values():
             for index, para in enumerate(content.get("abstract")):
-                para["pos"] = index
+                para["para_pos"] = index
 
             for index, para in enumerate(content.get("pls")):
-                para["pos"] = index
+                para["para_pos"] = index
 
     return data
 
@@ -607,9 +607,6 @@ def clean_up_data(data_dir: str, lang: str, output_dir: str, sample: int, trunca
     if lang:
         articles = filter_by_language(articles=articles, language=lang)
 
-    if sample:
-        articles = articles[:10]
-
     articles = reformat_pls(data=articles)
     articles = add_paragraph_pos(data=articles)
 
@@ -621,9 +618,14 @@ def clean_up_data(data_dir: str, lang: str, output_dir: str, sample: int, trunca
 
     articles = trim_by_ratio(data=articles, truncate_en_only=truncate_en_only)
     articles = remove_articles_without_content(data=articles)
+    articles = drop_small_sample_size(data=articles)
 
-    if not sample:
-        articles = drop_small_sample_size(data=articles)
+    if truncate_en_only:
+         # Remove articles without english content, since no reference is available
+        articles = [article for article in articles if "en" in article.get("content")]
+
+    if sample:
+        articles = articles[:sample]
 
     languages = get_languages(articles=articles)
     languages = sort_articles_into_languages(articles=articles, languages=languages)
