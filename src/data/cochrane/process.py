@@ -1,7 +1,6 @@
 import argparse
 import copy
 import json
-import random
 from os import path, makedirs
 from nltk.tokenize import sent_tokenize
 
@@ -263,7 +262,7 @@ def pls_length(article):
 
 #     return data
 
-def truncate_abstracts(data: list) -> list:
+def truncate_abstracts(data: list, truncate_en_only: bool) -> list:
     """Truncate the abstracts to only main results onwards
 
     For all abstracts with equal len, index-based method is used; keyword-based matching for other cases
@@ -272,6 +271,7 @@ def truncate_abstracts(data: list) -> list:
 
     Keyword arguments:
     data -- list of articles
+    truncate_en_only -- if True only main language (english) will be truncated, of False all languages.
     """
 
     articles = []
@@ -288,37 +288,44 @@ def truncate_abstracts(data: list) -> list:
                     first_index = index
                     break
 
-            for language, content in article.get("content").items():
-                if len(content.get("abstract")) == en_abs_len:
-                    # resolve by index
-                    article["content"][language]["abstract"] = article["content"][language]["abstract"][first_index:]
-                else:
-                    # resolve by keyword
-                    first_lang_index = -1
-                    keywords = {
-                        "ms": "keputusan",
-                        "de": "ergebnisse",
-                        "es": "resultados principales",
-                        "fr": "résultats principaux",
-                        "hr": "rezultati",
-                        "pt": "principais resultados",
-                        "ru": "основные результаты",
-                        "fa": "نتایج اصلی",
-                        "th": "ผลการวิจัย",
-                        "ja": "主な結果",
-                        "zh_hans": "主要结果",
-                        "zh_hant": "主要結果",
-                        "ko": "주요 결과",
-                    }
+            if truncate_en_only:
+                # Truncate english abstracts only
+                article["content"]["en"]["abstract"] = article["content"]["en"]["abstract"][first_index:]
 
-                    for index, section in enumerate(content.get("abstract")):
-                        if (keywords.get(language) in section.get("heading").strip().lower()):
-                            first_lang_index = index
-                            break
+                for lang, content in article.get("content").items():
+                    if lang != "en":
+                        article["content"][lang]["abstract"] = article["content"][lang]["abstract"]
+            else:
+                # Truncate all abstracts
+                for language, content in article.get("content").items():
+                    if len(content.get("abstract")) == en_abs_len:
+                        # resolve by index
+                        article["content"][language]["abstract"] = article["content"][language]["abstract"][first_index:]
+                    else:
+                        # resolve by keyword
+                        first_lang_index = -1
+                        keywords = {
+                            "ms": "keputusan",
+                            "de": "ergebnisse",
+                            "es": "resultados principales",
+                            "fr": "résultats principaux",
+                            "hr": "rezultati",
+                            "pt": "principais resultados",
+                            "ru": "основные результаты",
+                            "fa": "نتایج اصلی",
+                            "th": "ผลการวิจัย",
+                            "ja": "主な結果",
+                            "zh_hans": "主要结果",
+                            "zh_hant": "主要結果",
+                            "ko": "주요 결과",
+                        }
 
-                    article["content"][language]["abstract"] = article["content"][
-                        language
-                    ]["abstract"][first_lang_index:]
+                        for index, section in enumerate(content.get("abstract")):
+                            if (keywords.get(language) in section.get("heading").strip().lower()):
+                                first_lang_index = index
+                                break
+
+                        article["content"][language]["abstract"] = article["content"][language]["abstract"][first_lang_index:]
 
             # for language in article.get('content'):
             #    article['content'][language]['abstract'] = article['content'][language]['abstract'][first_index:]
@@ -448,49 +455,58 @@ def add_paragraph_pos(data: list) -> list[dict]:
 
     return data
 
-def truncate_pls(data: list) -> list:
+def truncate_pls_content(content: dict, lang: str) -> dict:
+    # LONG PLS
+    if content["pls_type"] == "long":
+        pls_text = content["pls"][0]["text"]
+        para_count = len(pls_text.strip().split("\n"))
+
+        # LONG Single Paragraph
+        if para_count == 1:
+            content["pls_subtype"] = "single"
+            content["pls"][0]["text"] = one_para_filter(text=pls_text, language=lang)
+        
+        # LONG Multi Paragraphs
+        if para_count > 1:
+            content["pls_subtype"] = "multi"
+
+            first_index = -1
+            for index, para in enumerate(pls_text.strip().split("\n")):
+                if res_para(text=para, language=lang):
+                    first_index = index
+                    break
+
+            if first_index > -1:
+                content["pls"][0]["text"] = "\n".join(pls_text.strip().split("\n")[first_index:])
+            else:
+                content["pls"] = []
+
+    # SECTIONED PLS
+    if content["pls_type"] == "sectioned":
+        first_index = -1
+        for index, section in enumerate(content['pls']):
+            if res_heading(section['heading'], language=lang):
+                first_index = index
+                break
+        
+        if first_index > -1:
+            content['pls'] = content['pls'][first_index:]
+        else:
+            content['pls'] = []
+
+    return content
+
+def truncate_pls(data: list, truncate_en_only: bool) -> list:
     """Truncates pls based on keywords"""
 
     articles = []
     for article in data:
         for lang, content in article.get("content").items():
-            # LONG PLS
-            if content["pls_type"] == "long":
-                pls_text = content["pls"][0]["text"]
-                para_count = len(pls_text.strip().split("\n"))
-
-                # LONG Single Paragraph
-                if para_count == 1:
-                    content["pls_subtype"] = "single"
-                    content["pls"][0]["text"] = one_para_filter(text=pls_text, language=lang)
-                
-                # LONG Multi Paragraphs
-                if para_count > 1:
-                    content["pls_subtype"] = "multi"
-
-                    first_index = -1
-                    for index, para in enumerate(pls_text.strip().split("\n")):
-                        if res_para(text=para, language=lang):
-                            first_index = index
-                            break
-
-                    if first_index > -1:
-                        content["pls"][0]["text"] = "\n".join(pls_text.strip().split("\n")[first_index:])
-                    else:
-                        content["pls"] = []
-
-            # SECTIONED PLS
-            if content["pls_type"] == "sectioned":
-                first_index = -1
-                for index, section in enumerate(content['pls']):
-                    if res_heading(section['heading'], language=lang):
-                        first_index = index
-                        break
-                
-                if first_index > -1:
-                    content['pls'] = content['pls'][first_index:]
-                else:
-                    content['pls'] = []
+            if truncate_en_only:
+                if lang == "en":
+                    article["content"][lang] = truncate_pls_content(content=content, lang=lang)
+            else:
+                article["content"][lang] = truncate_pls_content(content=content, lang=lang)
 
         articles.append(article)
 
@@ -509,7 +525,21 @@ def filter_by_language(articles: list[dict], language: str) -> list[dict]:
 
     return modified_articles
 
-def trim_by_ratio(data: list) -> list:
+def trim_content(modified_content: dict, lang: str, content: dict) -> dict:
+    if content["pls_type"] == "long":
+        if content["pls_subtype"] == "single":
+            if pls_length(content)/abs_length(content) >= 0.20 and pls_length(content)/abs_length(content) <= 1.4:
+                modified_content[lang] = content
+        if content["pls_subtype"] == "multi":
+            if pls_length(content)/abs_length(content) >= 0.30 and pls_length(content)/abs_length(content) <= 1.3:
+                modified_content[lang] = content
+    if content["pls_type"] == "sectioned":
+        if pls_length(content)/abs_length(content) >= 0.30 and pls_length(content)/abs_length(content) <= 1.3:
+            modified_content[lang] = content
+
+    return modified_content
+
+def trim_by_ratio(data: list, truncate_en_only: bool) -> list:
     """Trims each language content based on ratio between pls <-> abstract len."""
 
     articles = []
@@ -517,17 +547,18 @@ def trim_by_ratio(data: list) -> list:
     for article in data:
         modified_content = {}
 
-        for lang, content in article.get("content").items():
-            if content["pls_type"] == "long":
-                if content["pls_subtype"] == "single":
-                    if pls_length(content)/abs_length(content) >= 0.20 and pls_length(content)/abs_length(content) <= 1.4:
-                        modified_content[lang] = content
-                if content["pls_subtype"] == "multi":
-                    if pls_length(content)/abs_length(content) >= 0.30 and pls_length(content)/abs_length(content) <= 1.3:
-                        modified_content[lang] = content
-            if content["pls_type"] == "sectioned":
-                if pls_length(content)/abs_length(content) >= 0.30 and pls_length(content)/abs_length(content) <= 1.3:
+        if truncate_en_only:
+            lang = "en"
+            content = article.get("content").get(lang)
+            if content:
+                modified_content = trim_content(modified_content, lang, content)
+
+            for lang, content in article.get("content").items():
+                if lang != "en":
                     modified_content[lang] = content
+        else:
+            for lang, content in article.get("content").items():
+                modified_content = trim_content(modified_content, lang, content)
             
         article["content"] = modified_content
         articles.append(article)
@@ -567,7 +598,7 @@ def drop_small_sample_size(data: list) -> list:
 
     return data
 
-def clean_up_data(data_dir: str, lang: str, output_dir: str, sample: int):
+def clean_up_data(data_dir: str, lang: str, output_dir: str, sample: int, truncate_en_only: bool):
     articles = json.load(open(path.join(data_dir, "data.json")))
 
     articles = remove_articles_without_content(data=articles)
@@ -577,18 +608,18 @@ def clean_up_data(data_dir: str, lang: str, output_dir: str, sample: int):
         articles = filter_by_language(articles=articles, language=lang)
 
     if sample:
-        articles = random.sample(articles, sample)
+        articles = articles[:10]
 
     articles = reformat_pls(data=articles)
     articles = add_paragraph_pos(data=articles)
 
-    articles = truncate_abstracts(data=articles)
+    articles = truncate_abstracts(data=articles, truncate_en_only=truncate_en_only)
     articles = remove_short_abstracts(data=articles)
 
-    articles = truncate_pls(data=articles)
+    articles = truncate_pls(data=articles, truncate_en_only=truncate_en_only)
     articles = remove_empty_pls(data=articles)
 
-    articles = trim_by_ratio(data=articles)
+    articles = trim_by_ratio(data=articles, truncate_en_only=truncate_en_only)
     articles = remove_articles_without_content(data=articles)
 
     if not sample:
@@ -605,11 +636,12 @@ def clean_up_data(data_dir: str, lang: str, output_dir: str, sample: int):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Cochrane Preprocessing", description="Preprocessing Cochrane Data")
-    parser.add_argument("--sample", type=int, help="Path of filelist with dois")
-    parser.add_argument("--language", type=str, help="Language to process",)
+    parser.add_argument("--sample", type=int, help="Sample No of articles")
+    parser.add_argument("--language", type=str, help="Language to process")
+    parser.add_argument("--truncate_en_only", type=bool, default=True, help="Truncates only english articles. Setting to False will truncate all languages by keywords.")
     parser.add_argument("--data_dir", type=str, default="./scraped_data", help="Directory of scraped data")
     parser.add_argument("--output_dir", type=str, default="./processed_data", help="Output directory")
 
     args = parser.parse_args()
 
-    clean_up_data(data_dir=args.data_dir, lang=args.language, output_dir=args.output_dir, sample=args.sample)
+    clean_up_data(data_dir=args.data_dir, lang=args.language, output_dir=args.output_dir, sample=args.sample, truncate_en_only=args.truncate_en_only)
