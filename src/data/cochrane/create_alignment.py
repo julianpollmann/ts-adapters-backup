@@ -175,9 +175,9 @@ def create_sent_files(data: list, output_dir: str) -> None:
             abstract_sents = get_sents(paragraphs=abstract, lang=lang, nlp=nlp)
             write_sents(abstract_sents, doi=article.get('doi'), output_dir=output_dir, part='abstract', lang=lang, as_json=True)
 
-            pls = content.get('pls')
-            pls_sents = get_sents(paragraphs=pls, lang=lang, nlp=nlp)
-            write_sents(pls_sents, doi=article.get('doi'), output_dir=output_dir, part='pls', lang=lang, as_json=True)
+            # pls = content.get('pls')
+            # pls_sents = get_sents(paragraphs=pls, lang=lang, nlp=nlp)
+            # write_sents(pls_sents, doi=article.get('doi'), output_dir=output_dir, part='pls', lang=lang, as_json=True)
 
 def create_overlaps(overlaps: int, output_dir: str) -> None:
     logger.info('Creatings overlaps')
@@ -186,14 +186,15 @@ def create_overlaps(overlaps: int, output_dir: str) -> None:
         if not path.exists(path.join(doi_dir, 'overlaps')):
             makedirs(path.join(doi_dir, 'overlaps'))
 
+        if path.exists(path.join(doi_dir, 'sents')):
             for file in listdir(path.join(doi_dir, 'sents')):
                 if not file.endswith(".json"):
                     lang = file.split('.')[1]
                     overlap.go(output_file=f'{doi_dir}/overlaps/abstract_overlaps.{lang}',
                             input_files=[f'{doi_dir}/sents/abstract.{lang}'], num_overlaps=overlaps)
-                    
-                    overlap.go(output_file=f'{doi_dir}/overlaps/pls_overlaps.{lang}',
-                            input_files=[f'{doi_dir}/sents/pls.{lang}'], num_overlaps=overlaps)                  
+                
+                # overlap.go(output_file=f'{doi_dir}/overlaps/pls_overlaps.{lang}',
+                #         input_files=[f'{doi_dir}/sents/pls.{lang}'], num_overlaps=overlaps)                  
 
 def create_embeddings(files: list, encoder_model, doi_dir: str, part: str) -> None:
     for file in files:
@@ -236,10 +237,6 @@ def create_embedding_files(language: str, output_dir: str) -> None:
         create_embeddings(pls_files, encoder_model=encoder_model, doi_dir=doi_dir, part='pls')
 
 def create_alignments(output_dir: str) -> None:
-    #./vecalign.py --alignment_max_size 8 --src bleualign_data/dev.de --tgt bleualign_data/dev.fr \
-    #--src_embed bleualign_data/overlaps.de bleualign_data/overlaps.de.emb  \
-    #--tgt_embed bleualign_data/overlaps.fr bleualign_data/overlaps.fr.emb
-
     args.alignment_max_size = 4
     args.one_to_many = None
     args.search_buffer_size = 5
@@ -251,46 +248,41 @@ def create_alignments(output_dir: str) -> None:
     processing_type = 'abstract'
 
     doi_dirs = get_doi_dirs(output_dir=output_dir)
-    doi_dirs = doi_dirs[:1]
 
-    print(len(doi_dirs))
-
-
-    for doi_dir in doi_dirs:
-        print('#######################################')
+    for doi_dir in tqdm(doi_dirs):
         logger.info('Aligning DOI DIR "%s"', doi_dir)
 
-        # Read all overlaps files for processing type
-        #embeddings = [f for f in listdir(path.join(doi_dir, 'embeddings')) if f.startswith(processing_type)]
-        overlaps = [f for f in listdir(path.join(doi_dir, 'overlaps')) if f.startswith(processing_type)]
+        embedding_files = [f for f in listdir(path.join(doi_dir, 'embeddings')) if f.startswith(processing_type) and f.split(".")[1] != "en"]
 
-        for file in overlaps:
-            print("*"*50)
-            lang = file.split('.')[1]
+        for embedding in embedding_files:
+            lang = embedding.split(".")[1]
 
-            if lang != 'en':
+            if Path(f'{doi_dir}/overlaps/{processing_type}_overlaps.en').is_file() and Path(f'{doi_dir}/overlaps/{processing_type}_overlaps.{lang}').is_file():
                 logger.info('Aligning en to %s', lang)
 
                 # TODO CHECK if files exists in overlaps, sents, embeddings
                 # TODO Dont compute alignments if already exists
                 try:
                     src_sent2line, src_line_embeddings = dp_utils.read_in_embeddings(f'{doi_dir}/overlaps/{processing_type}_overlaps.en', f'{doi_dir}/embeddings/{processing_type}_overlaps.en.emb')
-                    tgt_sent2line, tgt_line_embeddings = dp_utils.read_in_embeddings(f'{doi_dir}/overlaps/{file}', f'{doi_dir}/embeddings/{processing_type}_overlaps.{lang}.emb')
+                    tgt_sent2line, tgt_line_embeddings = dp_utils.read_in_embeddings(f'{doi_dir}/overlaps/{processing_type}_overlaps.{lang}', f'{doi_dir}/embeddings/{embedding}')
 
                     src_max_alignment_size = 1 if args.one_to_many is not None else args.alignment_max_size
                     tgt_max_alignment_size = args.one_to_many if args.one_to_many is not None else args.alignment_max_size
 
                     width_over2 = ceil(max(src_max_alignment_size, tgt_max_alignment_size) / 2.0) + args.search_buffer_size
 
-                    stack_list = []
-                    src_file = f'{doi_dir}/sents/{processing_type}.en'
-                    tgt_file = f'{doi_dir}/sents/{processing_type}.{lang}'
+                    src_file = f'{doi_dir}/sents/{processing_type}.en.json'
+                    tgt_file = f'{doi_dir}/sents/{processing_type}.{lang}.json'
 
+                    with open(src_file, 'rt', encoding="utf-8") as f:
+                        src_json = json.load(f)
+                        src_lines = [sent['text'] for sent in src_json]
 
-                    src_lines = open(src_file, 'rt', encoding="utf-8").readlines()
+                    with open(tgt_file, 'rt', encoding="utf-8") as f:
+                        tgt_json = json.load(f)
+                        tgt_lines = [sent['text'] for sent in tgt_json]
+
                     vecs0 = dp_utils.make_doc_embedding(src_sent2line, src_line_embeddings, src_lines, src_max_alignment_size)
-
-                    tgt_lines = open(tgt_file, 'rt', encoding="utf-8").readlines()
                     vecs1 = dp_utils.make_doc_embedding(tgt_sent2line, tgt_line_embeddings, tgt_lines, tgt_max_alignment_size)
 
                     if args.one_to_many is not None:
@@ -306,41 +298,27 @@ def create_alignments(output_dir: str) -> None:
                                     max_size_full_dp=args.max_size_full_dp,
                                     costs_sample_size=args.costs_sample_size,
                                     num_samps_for_norm=args.num_samps_for_norm)
-                    
 
-                    # write final alignments to stdout
-                    #dp_utils.print_alignments(stack[0]['final_alignments'], scores=stack[0]['alignment_scores'],
-                    #        src_lines=src_lines if args.print_aligned_text else None,
-                    #        tgt_lines=tgt_lines if args.print_aligned_text else None)
-                    
-                    print("#" * 100)
-                    for alignment in stack[0]['final_alignments']:
-                        print(alignment)
+                    # Writing aligned sentences
+                    tgt_sents = []
+                    for (x, y), s in zip(stack[0]['final_alignments'], stack[0]['alignment_scores']):
+                        if x:
+                            tgt_sents = tgt_lines[y[0]:]
+                            break
+                    write_aligned_sents(doi_dir=doi_dir, sents=tgt_sents, part=processing_type, lang=lang)
 
-                    # tgt_index = [0]
-                    # for alignment in stack[0]['final_alignments']:
-                    #     src_alignment = alignment[0]
-                    #     if start_index in src_alignment:
-                    #         tgt_index = alignment[1]
-
-                    # tgt_sents = tgt_lines[tgt_index[0]:]
-                    #for idx, sent in enumerate(tgt_sents):
-                    #    print(f"{idx}-{sent}")
-
-                    #[tgt_lines[i].replace('\n', ' ').strip() for i in y]
-                    #write_aligned_sents(doi_dir=doi_dir, sents=tgt_sents, part=processing_type, lang=lang)
-                
                 except Exception as e:
                     print(e)
                     print(doi_dir)
+                    continue
 
 def write_aligned_sents(doi_dir: str, sents: list, part: str, lang: str):
     if not path.exists(path.join(doi_dir, 'aligned_sents')):
         makedirs(path.join(doi_dir, 'aligned_sents'))
 
-    with open(path.join(doi_dir, 'aligned_sents', f'{part}.{lang}'), 'a', encoding='utf8') as f:
+    with open(path.join(doi_dir, 'aligned_sents', f'{part}.{lang}'), 'w', encoding='utf8') as f:
         for sent in sents:
-            f.write(sent)
+            f.write(sent + "\n")
 
 def create_data_dirs(output_dir: str, data: list) -> None:
     logger.info('Creating data dirs')
