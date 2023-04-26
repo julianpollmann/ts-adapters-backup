@@ -1,128 +1,68 @@
 import argparse
 import json
+from os import listdir, makedirs, path
+from utils import get_doi_dirs, replace_special_tokens_inverse
 
-from os import path, walk
-from sklearn.model_selection import train_test_split
+def save_json(data: dict, output_dir: str) -> None:
+    """Saves data to json files"""
+    with open(path.join(output_dir, "final_data.json"), "w", encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-parser = argparse.ArgumentParser(
-    prog="Cochrane Dataset Creator", description="Creates Cochrane review dataset"
-)
-parser.add_argument(
-    "--data_dir",
-    type=str,
-    default="./scraped_data/final_data",
-    help="Directory of final data",
-)
-parser.add_argument(
-    "--input_file_name",
-    type=str,
-    default="data_final.json",
-    help="Filename of preprocessed data",
-)
-args = parser.parse_args()
+def create_src_tgt_pairs(input_dir: str, output_dir: str) -> None:
+    """Creates source and target pairs for each language and writes them as json file"""
+    data = {"en": [], "es": [], "fr": [], "fa": [], "pt": [], "de": []}
+    doi_dirs = get_doi_dirs(input_dir)
 
-RANDOM_SEED = 42
-TEST_SIZE = 0.2
-MIN_SAMPLE_SIZE_TEST = 50
-MAX_SAMPLE_SIZE_TEST = 500
+    if not path.exists(path.join(output_dir)):
+        makedirs(path.join(output_dir))
 
+    for doi_dir in doi_dirs:
+        doi = doi_dir.split("/")[-1]
 
-def read_json(lang: str):
-    """Reads json file and return as list"""
-    with open(path.join(data_dir, lang, input_file_name), "r") as f:
-        return json.load(f)
+        en_article = {"doi": doi, "src": "", "tgt": ""}
 
+        # English Complex/Source
+        with open(path.join(doi_dir, 'sents/abstract.en'), encoding='utf-8') as f:
+            src_en = " ".join(f.readlines())
+            en_article["src"] = replace_special_tokens_inverse(src_en)
 
-def concat_parts(parts) -> str:
-    """Concatenates parts of abstract or pls"""
-    output = ""
+        # English Simple/Target
+        with open(path.join(doi_dir, 'sents/pls.en'), encoding='utf-8') as f:
+            tgt_en = " ".join(f.readlines())
+            en_article["tgt"] = replace_special_tokens_inverse(tgt_en)
 
-    if type(parts) is list:
-        for para in parts:
-            output += para.get("text") + " "
-    else:
-        output = parts
+        if en_article["src"] and en_article["tgt"]:
+            data["en"].append(en_article)
 
-    return output.strip()
+        # Other languages
+        for lang in data:
+            if lang != "en":
+                if path.isfile(path.join(doi_dir, "aligned_sents", f"abstract.{lang}")) and path.isfile(path.join(doi_dir, "aligned_sents", f"pls.{lang}")):
+                    article = {"doi": doi, "src": "", "tgt": ""}
 
+                    # Complex/Source
+                    with open(path.join(doi_dir, "aligned_sents", f"abstract.{lang}"), encoding='utf-8') as f:
+                        src = " ".join(f.readlines())
+                        article["src"] = replace_special_tokens_inverse(src)
 
-def replace_newline(text) -> str:
-    """Replaces newline with [NWLNE]"""
-    return text.replace("\n", "[NWLNE]")
+                    # Simple/Target
+                    with open(path.join(doi_dir, "aligned_sents", f"abstract.{lang}"), encoding='utf-8') as f:
+                        tgt = " ".join(f.readlines())
+                        article["tgt"] = replace_special_tokens_inverse(tgt)
 
+                    if article["src"] and article["tgt"]:
+                        data[lang].append(article)
 
-def write_data(articles: list, split: str, language: str) -> None:
-    """Writes data to .src, .dst and .doi files"""
+    save_json(data, output_dir)
 
-    for article in articles:
-        (
-            doi,
-            abstract,
-            pls,
-        ) = (
-            article.get("doi"),
-            article.get("abstract"),
-            article.get("pls"),
-        )
-
-        abstract = replace_newline(concat_parts(abstract))
-        pls = replace_newline(concat_parts(pls))
-
-        with open(path.join(data_dir, language, f"{split}.doi"), "a") as f:
-            f.write(doi)
-            f.write("\n")
-
-        with open(path.join(data_dir, language, f"{split}.src"), "a") as f:
-            f.write(abstract)
-            f.write("\n")
-
-        with open(path.join(data_dir, language, f"{split}.dst"), "a") as f:
-            f.write(pls)
-            f.write("\n")
-
+def main(input_dir: str, output_dir: str):
+    create_src_tgt_pairs(input_dir, output_dir)
 
 if __name__ == "__main__":
-    """Loop over every language and create train/test/dev split
+    parser = argparse.ArgumentParser('Sentence alignment using vecalign', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--input_dir', type=str, default='./data', help='Input file containing list of Review dicts.')
+    parser.add_argument('--output_dir', type=str, default='./final_data', help='Output directory.')
 
-    Drops languages with less than MIN_SAMPLE_SIZE_TEST
-    Uses data as testset if sample_size between MIN_SAMPLE_SIZE_TEST and MAX_SAMPLE_SIZE_TEST
-    Uses data as train/test/dev split if sample_size larger than MAX_SAMPLE_SIZE_TEST
-    Writes split files as .src, .dst and .doi files
-    """
-    data_dir = args.data_dir
-    input_file_name = args.input_file_name
+    args = parser.parse_args()
 
-    for subdir, dirs, files in walk(data_dir):
-        for dir in dirs:
-            lang = dir
-
-            json_data = read_json(lang=lang)
-            sample_size = len(json_data)
-
-            # Drop sample if to small
-            if sample_size <= MIN_SAMPLE_SIZE_TEST:
-                print(f"Skipped {lang} due to small sample size")
-                continue
-
-            # Use data as testset if sample_size to small
-            # Otherwise create train/test/dev split
-            if (
-                sample_size > MIN_SAMPLE_SIZE_TEST
-                and sample_size <= MAX_SAMPLE_SIZE_TEST
-            ):
-                write_data(articles=json_data, split="test", language=lang)
-                print(f"Wrote {lang} as test set")
-
-            else:
-                train, test = train_test_split(
-                    json_data, test_size=TEST_SIZE, random_state=RANDOM_SEED
-                )
-                test, valid = train_test_split(
-                    test, test_size=0.5, random_state=RANDOM_SEED
-                )
-
-                write_data(articles=train, split="train", language=lang)
-                write_data(articles=test, split="test", language=lang)
-                write_data(articles=valid, split="valid", language=lang)
-
-                print(f"Wrote {lang} as train/test/dev split")
+    main(input_dir=args.input_dir, output_dir=args.output_dir)
