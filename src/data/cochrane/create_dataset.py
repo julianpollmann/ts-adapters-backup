@@ -2,19 +2,65 @@ import argparse
 import json
 from os import listdir, makedirs, path
 from utils import get_doi_dirs, replace_special_tokens_inverse
+from sklearn.model_selection import train_test_split
+
+RANDOM_SEED = 42
+TEST_SIZE = 0.2
+MIN_SAMPLE_SIZE_TEST = 1
+MAX_SAMPLE_SIZE_TEST = 500
 
 def save_json(data: dict, output_dir: str) -> None:
     """Saves data to json files"""
-    with open(path.join(output_dir, "final_data.json"), "w", encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-def create_src_tgt_pairs(input_dir: str, output_dir: str) -> None:
-    """Creates source and target pairs for each language and writes them as json file"""
-    data = {"en": [], "es": [], "fr": [], "fa": [], "pt": [], "de": []}
-    doi_dirs = get_doi_dirs(input_dir)
 
     if not path.exists(path.join(output_dir)):
         makedirs(path.join(output_dir))
+
+    with open(path.join(output_dir, "final_data.json"), "w", encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def save_data(articles: list, split: str, language: str, output_dir: str) -> None:
+    """Writes data to .src, .dst and .doi files for each language.
+    
+    Keyword arguments:
+    articles -- list of articles
+    split -- train, test or dev
+    language -- language of articles/dir to save data
+    output_dir -- dir to save data
+    """
+
+    if not path.exists(path.join(output_dir, language)):
+        makedirs(path.join(output_dir, language))
+
+    for article in articles:
+        doi, abstract, pls = article.get("doi"), article.get("src"), article.get("tgt")
+
+        with open(path.join(output_dir, language, f"{split}.doi"), "a") as f:
+            f.write(doi)
+            f.write("\n")
+
+        with open(path.join(output_dir, language, f"{split}.src"), "a") as f:
+            f.write(abstract)
+            f.write("\n")
+
+        with open(path.join(output_dir, language, f"{split}.dst"), "a") as f:
+            f.write(pls)
+            f.write("\n")
+
+def create_src_tgt_pairs(input_dir: str) -> dict:
+    """Creates source and target pairs for each language.
+
+    If sample size is to small, the data is excluded. If sample size is between
+    MIN_SAMPLE_SIZE and MAX_SAMPLE_SIZE, the data is used as test set.
+    If sample size larger than MAX_SAMPLE_SIZE, the data is split into
+    train/test/dev.
+
+    Keyword arguments:
+    input_dir -- dir of aligned data
+    """
+
+
+    data = {"en": [], "es": [], "fr": [], "fa": [], "pt": [], "de": []}
+    doi_dirs = get_doi_dirs(input_dir)
 
     for doi_dir in doi_dirs:
         doi = doi_dir.split("/")[-1]
@@ -37,7 +83,8 @@ def create_src_tgt_pairs(input_dir: str, output_dir: str) -> None:
         # Other languages
         for lang in data:
             if lang != "en":
-                if path.isfile(path.join(doi_dir, "aligned_sents", f"abstract.{lang}")) and path.isfile(path.join(doi_dir, "aligned_sents", f"pls.{lang}")):
+                if (path.isfile(path.join(doi_dir, "aligned_sents", f"abstract.{lang}")) and
+                    path.isfile(path.join(doi_dir, "aligned_sents", f"pls.{lang}"))):
                     article = {"doi": doi, "src": "", "tgt": ""}
 
                     # Complex/Source
@@ -53,13 +100,55 @@ def create_src_tgt_pairs(input_dir: str, output_dir: str) -> None:
                     if article["src"] and article["tgt"]:
                         data[lang].append(article)
 
-    save_json(data, output_dir)
+    return data
+
+def create_train_test_split(data: dict, output_dir: str) -> None:
+    """Creates train/test/dev split for each language and saves the files.
+
+    If sample size is to small, the data is excluded. If sample size is between
+    MIN_SAMPLE_SIZE and MAX_SAMPLE_SIZE, the data is used as test set.
+    If sample size larger than MAX_SAMPLE_SIZE, the data is split into
+    train/test/dev.
+
+    Keyword arguments:
+    data -- data to split (dict of lang: [articles])
+    output_dir -- dir to write the data
+    """
+    for lang, articles in data.items():
+        sample_size = len(articles)
+
+        # Drop sample if to small
+        if sample_size <= MIN_SAMPLE_SIZE_TEST:
+            print(f"Skipped {lang} due to small sample size")
+            continue
+
+        # Use data as testset if sample_size to small
+        # Otherwise create train/test/dev split
+        if sample_size > MIN_SAMPLE_SIZE_TEST and sample_size <= MAX_SAMPLE_SIZE_TEST:
+            save_data(articles=articles, split="test", language=lang, output_dir=output_dir)
+            print(f"Wrote {lang} as test set")
+
+        else:
+            train, test = train_test_split(articles, test_size=TEST_SIZE, random_state=RANDOM_SEED)
+            test, valid = train_test_split(test, test_size=0.5, random_state=RANDOM_SEED)
+
+            save_data(articles=train, split="train", language=lang, output_dir=output_dir)
+            save_data(articles=test, split="test", language=lang, output_dir=output_dir)
+            save_data(articles=valid, split="valid", language=lang, output_dir=output_dir)
+
+            print(f"Wrote {lang} as train/test/dev split")
 
 def main(input_dir: str, output_dir: str):
-    create_src_tgt_pairs(input_dir, output_dir)
+    data = create_src_tgt_pairs(input_dir)
+    save_json(data, output_dir)
+
+    create_train_test_split(data, output_dir)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser('Sentence alignment using vecalign', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        'Create Dataset for Text Simplification',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
     parser.add_argument('--input_dir', type=str, default='./data', help='Input file containing list of Review dicts.')
     parser.add_argument('--output_dir', type=str, default='./final_data', help='Output directory.')
 
