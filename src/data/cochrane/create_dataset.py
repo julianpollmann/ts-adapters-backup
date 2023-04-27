@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 
 RANDOM_SEED = 42
 TEST_SIZE = 0.2
+VALID_SIZE = 0.5
 MIN_SAMPLE_SIZE_TEST = 1
 MAX_SAMPLE_SIZE_TEST = 500
 
@@ -23,7 +24,7 @@ def save_data(articles: list, split: str, language: str, output_dir: str) -> Non
     
     Keyword arguments:
     articles -- list of articles
-    split -- train, test or dev
+    split -- train, test or valid
     language -- language of articles/dir to save data
     output_dir -- dir to save data
     """
@@ -49,10 +50,10 @@ def save_data(articles: list, split: str, language: str, output_dir: str) -> Non
 def create_src_tgt_pairs(input_dir: str) -> dict:
     """Creates source and target pairs for each language.
 
-    If sample size is to small, the data is excluded. If sample size is between
-    MIN_SAMPLE_SIZE and MAX_SAMPLE_SIZE, the data is used as test set.
-    If sample size larger than MAX_SAMPLE_SIZE, the data is split into
-    train/test/dev.
+    Reads every dir of aligned data and first creates english language pairs.
+    Then creates pairs for other languages specified in data dict.
+    Pairs are constructed using the (aligned) source sents and the (aligned)
+    pls sents and converted tokens from a previous step are converted back.
 
     Keyword arguments:
     input_dir -- dir of aligned data
@@ -103,12 +104,12 @@ def create_src_tgt_pairs(input_dir: str) -> dict:
     return data
 
 def create_train_test_split(data: dict, output_dir: str) -> None:
-    """Creates train/test/dev split for each language and saves the files.
+    """Creates train/test/valid split for each language and saves the files.
 
     If sample size is to small, the data is excluded. If sample size is between
     MIN_SAMPLE_SIZE and MAX_SAMPLE_SIZE, the data is used as test set.
     If sample size larger than MAX_SAMPLE_SIZE, the data is split into
-    train/test/dev.
+    train/test/valid.
 
     Keyword arguments:
     data -- data to split (dict of lang: [articles])
@@ -123,20 +124,20 @@ def create_train_test_split(data: dict, output_dir: str) -> None:
             continue
 
         # Use data as testset if sample_size to small
-        # Otherwise create train/test/dev split
+        # Otherwise create train/test/valid split
         if sample_size > MIN_SAMPLE_SIZE_TEST and sample_size <= MAX_SAMPLE_SIZE_TEST:
             save_data(articles=articles, split="test", language=lang, output_dir=output_dir)
             print(f"Wrote {lang} as test set")
 
         else:
             train, test = train_test_split(articles, test_size=TEST_SIZE, random_state=RANDOM_SEED)
-            test, valid = train_test_split(test, test_size=0.5, random_state=RANDOM_SEED)
+            test, valid = train_test_split(test, test_size=VALID_SIZE, random_state=RANDOM_SEED)
 
             save_data(articles=train, split="train", language=lang, output_dir=output_dir)
             save_data(articles=test, split="test", language=lang, output_dir=output_dir)
             save_data(articles=valid, split="valid", language=lang, output_dir=output_dir)
 
-            print(f"Wrote {lang} as train/test/dev split")
+            print(f"Wrote {lang} as train/test/valid split")
 
 def main(input_dir: str, output_dir: str):
     data = create_src_tgt_pairs(input_dir)
