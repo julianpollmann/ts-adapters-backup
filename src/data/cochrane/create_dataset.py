@@ -94,7 +94,7 @@ def create_src_tgt_pairs(input_dir: str) -> dict:
                         article["src"] = replace_special_tokens_inverse(src)
 
                     # Simple/Target
-                    with open(path.join(doi_dir, "aligned_sents", f"abstract.{lang}"), encoding='utf-8') as f:
+                    with open(path.join(doi_dir, "aligned_sents", f"pls.{lang}"), encoding='utf-8') as f:
                         tgt = " ".join(f.readlines())
                         article["tgt"] = replace_special_tokens_inverse(tgt)
 
