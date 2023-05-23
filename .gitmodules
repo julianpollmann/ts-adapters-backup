@@ -1,0 +1,6 @@
+[submodule "src/data/cochrane/vecalign"]
+	path = src/data/cochrane/vecalign
+	url = https://github.com/thompsonb/vecalign.git
+[submodule "src/data/cochrane/LASER"]
+	path = src/data/cochrane/LASER
+	url = https://github.com/facebookresearch/LASER.git
