@@ -1,5 +1,4 @@
 import argparse
-import logging
 from os import path, listdir
 
 import numpy as np
@@ -8,10 +7,11 @@ from easse.fkgl import corpus_fkgl
 from easse.sari import corpus_sari
 from evaluate import load
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, \
-    Seq2SeqTrainer
+    Seq2SeqTrainer, logging
 from transformers.trainer_utils import get_last_checkpoint
 
-logger = logging.getLogger(__name__)
+logging.set_verbosity_info()
+logger = logging.get_logger("transformers")
 
 
 def main(data_args: argparse.Namespace):
@@ -133,12 +133,10 @@ if __name__ == "__main__":
     parser.add_argument("--max_input_length", type=int, default=1024,
                         help="Max input length of tokenized text. Defaults to 512")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
-    # parser.add_argument("--base_dir", type=str, default="./data", help="Base dir of datasets. Defaults to ./data. Should contain train.src/dst, test.src/dst, valid.src/dst")
     parser.add_argument("--dataset", type=str, default="../datasets/newsela-en",
                         help="Name of the dataset in Huggingface Datasets format")
     parser.add_argument("--sample", type=int)
     parser.add_argument("--max_train_samples", type=int)
     parser.add_argument("--learning_rate", type=str, default=2e-5)
-
 
     main(data_args=parser.parse_args())
