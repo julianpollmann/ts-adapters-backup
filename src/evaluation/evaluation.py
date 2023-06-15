@@ -3,7 +3,7 @@ import os.path
 
 import numpy as np
 import pandas as pd
-from datasets import load_from_disk
+from datasets import load_dataset
 from easse.fkgl import corpus_fkgl
 from easse.report import write_html_report, DEFAULT_METRICS
 from easse.sari import corpus_sari
@@ -18,7 +18,7 @@ def save_data(path: str, fn: str, data: list):
 
 
 def main(data_args: argparse.Namespace):
-    dataset = load_from_disk(data_args.dataset)
+    dataset = load_dataset(data_args.dataset)
 
     tokenizer = AutoTokenizer.from_pretrained(data_args.checkpoint)
     model = AutoModelForSeq2SeqLM.from_pretrained(data_args.checkpoint)
@@ -30,13 +30,13 @@ def main(data_args: argparse.Namespace):
 
     def preprocess_function(examples):
         model_inputs = tokenizer(
-            examples['complex_sent'],
+            examples["src"],
             max_length=data_args.max_input_length,
             truncation=True,
             padding=True
         )
-        labels = tokenizer(examples['simple_sent'], max_length=data_args.max_input_length, truncation=True)
-        model_inputs['labels'] = labels['input_ids']
+        labels = tokenizer(examples["tgt"], max_length=data_args.max_input_length, truncation=True)
+        model_inputs["labels"] = labels["input_ids"]
 
         return model_inputs
 
@@ -80,10 +80,10 @@ def main(data_args: argparse.Namespace):
         )
 
         return {
-            'Bleu': bleu_score.get('bleu'),
-            'TER': ter_score.get('score'),
-            'SARI': sari_score,
-            'FKGL': fkgl_score
+            "Bleu": bleu_score.get("bleu"),
+            "TER": ter_score.get("score"),
+            "SARI": sari_score,
+            "FKGL": fkgl_score
         }
 
     trainer_args = Seq2SeqTrainingArguments(
@@ -111,18 +111,18 @@ def main(data_args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='TS Evaluation', description='TS Evaluation script')
+    parser = argparse.ArgumentParser(prog="TS Evaluation", description="TS Evaluation script")
     parser.add_argument(
-        'checkpoint',
+        "checkpoint",
         type=str,
-        help='Model Checkpoint. For finetuned models use the path to the trained model, for adapters use the base model'
-             '(e.g. facebook/bart-base).')
-    parser.add_argument('dataset', type=str, default="../datasets/newsela-en",
-                        help='Name of the dataset in Huggingface datasets format. Must contain a test set.')
-    parser.add_argument('output_dir', type=str, help='Output dir to store the evaluation.')
+        help="Model Checkpoint. For finetuned models use the path to the trained model, for adapters use the base model"
+             "(e.g. facebook/bart-base).")
+    parser.add_argument("dataset", type=str, default="../datasets/newsela-en",
+                        help="Name of the dataset in Huggingface datasets format. Must contain a test set.")
+    parser.add_argument("output_dir", type=str, help="Output dir to store the evaluation.")
 
     parser.add_argument("--max_input_length", type=int, default=1024,
-                        help='Max input length of tokenized text. Defaults to 1024')
+                        help="Max input length of tokenized text. Defaults to 1024")
     parser.add_argument("--adapter_path", type=str, help="Path to the trained task adapter. When specifying this, "
                                                          "use the base model as checkpoint")
 
