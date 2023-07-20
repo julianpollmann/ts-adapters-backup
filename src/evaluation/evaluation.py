@@ -44,21 +44,22 @@ def main(data_args: argparse.Namespace):
     test_ds = dataset["test"].map(preprocess_function, remove_columns=column_names, batched=True)
     test_ds.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 
-    bleu = load("bleu")
+    #bleu = load("bleu")
     ter = load("ter")
 
     def compute_metrics(eval_pred):
         predictions, labels, inputs = eval_pred
-        decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+        predictions = np.where(predictions != -100, predictions, tokenizer.pad_token_id)
         labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
         inputs = np.where(inputs != -100, inputs, tokenizer.pad_token_id)
+        decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
         decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
         decoded_inputs = tokenizer.batch_decode(inputs, skip_special_tokens=True)
 
-        bleu_score = bleu.compute(predictions=decoded_preds, references=decoded_labels)
+        #bleu_score = bleu.compute(predictions=decoded_preds, references=decoded_labels)
         ter_score = ter.compute(predictions=decoded_preds, references=decoded_labels, case_sensitive=True)
-        sari_score = corpus_sari(orig_sents=decoded_inputs, sys_sents=decoded_preds, refs_sents=[decoded_labels])
-        fkgl_score = corpus_fkgl(sentences=decoded_preds)
+        #sari_score = corpus_sari(orig_sents=decoded_inputs, sys_sents=decoded_preds, refs_sents=[decoded_labels])
+        #fkgl_score = corpus_fkgl(sentences=decoded_preds)
 
         # Write Src/Tgt/Preds to file
         df = pd.DataFrame()
@@ -68,6 +69,7 @@ def main(data_args: argparse.Namespace):
         df.to_json(os.path.join(data_args.output_dir, "predictions.json"))
 
         # Write EASSE HTML Report
+        # BLEU, SARI, FKGL are covered by this
         write_html_report(
             f"{data_args.output_dir}/easse_report.html",
             orig_sents=decoded_inputs,
@@ -80,10 +82,10 @@ def main(data_args: argparse.Namespace):
         )
 
         return {
-            "Bleu": bleu_score.get("bleu"),
+            #"Bleu": bleu_score.get("bleu"),
             "TER": ter_score.get("score"),
-            "SARI": sari_score,
-            "FKGL": fkgl_score
+            #"SARI": sari_score,
+            #"FKGL": fkgl_score
         }
 
     trainer_args = Seq2SeqTrainingArguments(
@@ -104,7 +106,8 @@ def main(data_args: argparse.Namespace):
         compute_metrics=compute_metrics,
     )
 
-    metrics = trainer.evaluate()
+    metrics = trainer.evaluate(max_length=1024)
+    metrics["model_params"] = model.num_parameters()
 
     trainer.log_metrics(split="test", metrics=metrics)
     trainer.save_metrics(split="test", metrics=metrics)
