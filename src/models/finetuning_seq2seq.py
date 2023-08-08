@@ -33,7 +33,12 @@ def main(data_args: argparse.Namespace):
             truncation=True,
             padding=True
         )
-        labels = tokenizer(examples["tgt"], max_length=data_args.max_input_length, truncation=True)
+        labels = tokenizer(
+            examples["tgt"],
+            max_length=data_args.max_target_length,
+            truncation=True,
+            padding=True
+        )
         model_inputs["labels"] = labels["input_ids"]
 
         return model_inputs
@@ -127,14 +132,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Text Simplification Finetuning",
                                      description="Finetuning Text Simplification")
     parser.add_argument("output_dir", type=str, help="Output dir to store trained checkpoints")
+    parser.add_argument("dataset", type=str, help="Name of the dataset in Huggingface Datasets format")
     parser.add_argument("--checkpoint", type=str, nargs=1, default="facebook/bart-base",
                         help="Model Checkpoint, can be either a pretrained model or a own checkpoint. Defaults to bart-base.")
     parser.add_argument("--steps", type=int, default=400, help="Number of steps to train")
     parser.add_argument("--max_input_length", type=int, default=1024,
-                        help="Max input length of tokenized text. Defaults to 512")
+                        help="Max input length of tokenized text. Defaults to 1024")
+    parser.add_argument("--max_target_length", type=int, default=1024,
+                        help="Max target length of tokenized text. Defaults to 1024")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
-    parser.add_argument("--dataset", type=str, default="../datasets/newsela-en",
-                        help="Name of the dataset in Huggingface Datasets format")
     parser.add_argument("--sample", type=int)
     parser.add_argument("--max_train_samples", type=int)
     parser.add_argument("--learning_rate", type=str, default=2e-5)
