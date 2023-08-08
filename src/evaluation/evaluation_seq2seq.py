@@ -35,7 +35,11 @@ def main(data_args: argparse.Namespace):
             truncation=True,
             padding=True
         )
-        labels = tokenizer(examples["tgt"], max_length=data_args.max_input_length, truncation=True)
+        labels = tokenizer(
+            examples["tgt"],
+            max_length=data_args.max_input_length,
+            truncation=True
+        )
         model_inputs["labels"] = labels["input_ids"]
 
         return model_inputs
@@ -106,7 +110,7 @@ def main(data_args: argparse.Namespace):
         compute_metrics=compute_metrics,
     )
 
-    metrics = trainer.evaluate(max_length=1024)
+    metrics = trainer.evaluate(max_length=data_args.max_input_length)
     metrics["model_params"] = model.num_parameters()
 
     trainer.log_metrics(split="test", metrics=metrics)
@@ -123,7 +127,6 @@ if __name__ == "__main__":
     parser.add_argument("dataset", type=str, default="../datasets/newsela-en",
                         help="Name of the dataset in Huggingface datasets format. Must contain a test set.")
     parser.add_argument("output_dir", type=str, help="Output dir to store the evaluation.")
-
     parser.add_argument("--max_input_length", type=int, default=1024,
                         help="Max input length of tokenized text. Defaults to 1024")
     parser.add_argument("--adapter_path", type=str, help="Path to the trained task adapter. When specifying this, "
