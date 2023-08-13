@@ -1,0 +1,28 @@
+name: finetuning
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+  - anaconda
+  - defaults
+dependencies:
+  - python=3.10.9
+  - pip
+  - jupyter
+  - scikit-learn
+  - pytorch==1.13.1
+  - pytorch-cuda=11.7
+  - pip:
+    - transformers
+    - tqdm
+    - ipywidgets
+    - numpy
+    - pandas
+    - datasets
+    - textstat
+    - nltk
+    - matplotlib
+    - seaborn
+    - hazm
+    - evaluate
+    - git+https://github.com/feralvam/easse.git

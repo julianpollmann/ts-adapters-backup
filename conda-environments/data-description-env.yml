@@ -1,0 +1,22 @@
+name: data-description
+channels:
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - python=3.10.9
+  - pip
+  - jupyter
+  - scikit-learn
+  - pip:
+    - tqdm
+    - ipywidgets
+    - numpy
+    - pandas
+    - datasets
+    - textstat
+    - nltk
+    - matplotlib
+    - seaborn
+    - hazm
+    - git+https://github.com/feralvam/easse.git
