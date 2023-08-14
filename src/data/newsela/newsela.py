@@ -25,13 +25,12 @@ class Newsela(datasets.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
-        currentpath = path.join(getcwd(), "ts-adapters", "src", "data", "newsela")
         generator = []
 
         train = datasets.SplitGenerator(
             name=datasets.Split.TRAIN,
             gen_kwargs={
-                "filepath": f"{currentpath}/train.csv",
+                "filepath": dl_manager.download("train.csv"),
                 "split": "train",
             },
         )
@@ -40,7 +39,7 @@ class Newsela(datasets.GeneratorBasedBuilder):
         test = datasets.SplitGenerator(
             name=datasets.Split.TEST,
             gen_kwargs={
-                "filepath": f"{currentpath}/test.csv",
+                "filepath": dl_manager.download("test.csv"),
                 "split": "test",
             },
         )
@@ -49,7 +48,7 @@ class Newsela(datasets.GeneratorBasedBuilder):
         valid = datasets.SplitGenerator(
             name=datasets.Split.VALIDATION,
             gen_kwargs={
-                "filepath": f"{currentpath}/valid.csv",
+                "filepath": dl_manager.download("valid.csv"),
                 "split": "eval",
             },
         )

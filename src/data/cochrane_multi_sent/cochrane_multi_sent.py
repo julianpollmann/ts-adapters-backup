@@ -34,13 +34,10 @@ class CochranePara(datasets.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
-        # currentpath = os.path.abspath(os.getcwd()) #TODO resolve path auto
-        currentpath = "/homes/julez/ts-adapters/src/data/cochrane_multi_sent"
-
         generator = []
-        file_train = os.path.join(currentpath, self.config.name, "train.csv")
-        file_test = os.path.join(currentpath, self.config.name, "test.csv")
-        file_eval = os.path.join(currentpath, self.config.name, "valid.csv")
+        file_train = dl_manager.download(os.path.join(self.config.name, "train.csv"))
+        file_test = dl_manager.download(os.path.join(self.config.name, "test.csv"))
+        file_eval = dl_manager.download(os.path.join(self.config.name, "valid.csv"))
 
         if os.path.isfile(file_train):
             train = datasets.SplitGenerator(
