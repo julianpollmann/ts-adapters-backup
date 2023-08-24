@@ -25,4 +25,5 @@ dependencies:
     - seaborn
     - hazm
     - evaluate
+    - accelerate
     - git+https://github.com/feralvam/easse.git
