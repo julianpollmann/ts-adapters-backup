@@ -10,8 +10,12 @@ def main(data_args: argparse.Namespace):
 
     tokenizer = AutoTokenizer.from_pretrained(data_args.checkpoint)
     model = AutoModelForSeq2SeqLM.from_pretrained(data_args.checkpoint)
-    data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
-
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer,
+        model=model,
+        label_pad_token_id=-100,
+        pad_to_multiple_of=8
+    )
     def preprocess_function(examples):
         model_inputs = tokenizer(
             examples["src"],
@@ -20,7 +24,7 @@ def main(data_args: argparse.Namespace):
             padding=True
         )
         labels = tokenizer(
-            examples["tgt"],
+            text_target=examples["tgt"],
             max_length=data_args.max_target_length,
             truncation=True,
             padding=True
