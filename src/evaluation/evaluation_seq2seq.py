@@ -4,13 +4,27 @@ import os.path
 import numpy as np
 import pandas as pd
 from datasets import load_dataset
-from easse.fkgl import corpus_fkgl
 from easse.report import write_html_report, DEFAULT_METRICS
-from easse.sari import corpus_sari
 from evaluate import load
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainer, \
-    Seq2SeqTrainingArguments
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSeq2SeqLM,
+    DataCollatorForSeq2Seq,
+    Seq2SeqTrainer,
+    Seq2SeqTrainingArguments,
+    MBartTokenizer,
+    MBartTokenizerFast,
+    MBart50Tokenizer,
+    MBart50TokenizerFast
+)
 
+MULTILINGUAL_TOKENIZERS = [MBartTokenizer, MBartTokenizerFast, MBart50Tokenizer, MBart50TokenizerFast]
+LANGUAGE_MAPPING = {
+    "en": "en_XX",
+    "es": "es_XX",
+    "fa": "fa_IR",
+    "fr": "fr_XX"
+}
 
 def save_data(path: str, fn: str, data: list):
     with open(os.path.join(path, fn), "w", encoding="utf-8") as f:
@@ -18,11 +32,25 @@ def save_data(path: str, fn: str, data: list):
 
 
 def main(data_args: argparse.Namespace):
-    dataset = load_dataset(data_args.dataset)
+    dataset = load_dataset(data_args.dataset, name=data_args.language)
 
     tokenizer = AutoTokenizer.from_pretrained(data_args.checkpoint)
     model = AutoModelForSeq2SeqLM.from_pretrained(data_args.checkpoint)
     data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
+
+    if isinstance(tokenizer, tuple(MULTILINGUAL_TOKENIZERS)):
+        lang = LANGUAGE_MAPPING.get(data_args.language) if data_args.language is not None else LANGUAGE_MAPPING.get("en")
+
+        tokenizer.src_lang = lang
+        tokenizer.tgt_lang = lang
+
+        # For multilingual translation models like mBART-50 and M2M100 we need to force the target language token
+        # as the first generated token. We ask the user to explicitly provide this as --forced_bos_token argument.
+        # forced_bos_token_id = (
+        #     tokenizer.lang_code_to_id[data_args.forced_bos_token] if data_args.forced_bos_token is not None else None
+        # )
+        model.config.forced_bos_token_id = tokenizer.lang_code_to_id[lang]
+
 
     if data_args.adapter_path:
         adapter_name = model.load_adapter(data_args.adapter_path, config="pfeiffer")
@@ -36,7 +64,7 @@ def main(data_args: argparse.Namespace):
             padding=True
         )
         labels = tokenizer(
-            examples["tgt"],
+            text_target=examples["tgt"],
             max_length=data_args.max_input_length,
             truncation=True
         )
@@ -131,5 +159,6 @@ if __name__ == "__main__":
                         help="Max input length of tokenized text. Defaults to 1024")
     parser.add_argument("--adapter_path", type=str, help="Path to the trained task adapter. When specifying this, "
                                                          "use the base model as checkpoint")
+    parser.add_argument("--language", type=str, default=None)
 
     main(data_args=parser.parse_args())

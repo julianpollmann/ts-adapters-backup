@@ -1,8 +1,25 @@
 import argparse
 
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, \
-    Seq2SeqTrainer
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSeq2SeqLM,
+    DataCollatorForSeq2Seq,
+    Seq2SeqTrainingArguments,
+    Seq2SeqTrainer,
+    MBartTokenizer,
+    MBartTokenizerFast,
+    MBart50Tokenizer,
+    MBart50TokenizerFast
+)
+
+MULTILINGUAL_TOKENIZERS = [MBartTokenizer, MBartTokenizerFast, MBart50Tokenizer, MBart50TokenizerFast]
+LANGUAGE_MAPPING = {
+    "en": "en_XX",
+    "es": "es_XX",
+    "fa": "fa_IR",
+    "fr": "fr_XX"
+}
 
 
 def main(data_args: argparse.Namespace):
@@ -16,6 +33,21 @@ def main(data_args: argparse.Namespace):
         label_pad_token_id=-100,
         pad_to_multiple_of=8
     )
+
+    if isinstance(tokenizer, tuple(MULTILINGUAL_TOKENIZERS)):
+        lang = LANGUAGE_MAPPING.get(data_args.language) if data_args.language is not None else LANGUAGE_MAPPING.get(
+            "en")
+
+        tokenizer.src_lang = lang
+        tokenizer.tgt_lang = lang
+
+        # For multilingual translation models like mBART-50 and M2M100 we need to force the target language token
+        # as the first generated token. We ask the user to explicitly provide this as --forced_bos_token argument.
+        # forced_bos_token_id = (
+        #     tokenizer.lang_code_to_id[data_args.forced_bos_token] if data_args.forced_bos_token is not None else None
+        # )
+        model.config.forced_bos_token_id = tokenizer.lang_code_to_id[lang]
+
     def preprocess_function(examples):
         model_inputs = tokenizer(
             examples["src"],
@@ -48,8 +80,8 @@ def main(data_args: argparse.Namespace):
         max_steps=data_args.steps,
         save_total_limit=3,
         optim="adamw_torch",
-        #predict_with_generate=True,
-        #include_inputs_for_metrics=True,
+        # predict_with_generate=True,
+        # include_inputs_for_metrics=True,
         fp16=True,
         eval_steps=100,
         logging_steps=100,
