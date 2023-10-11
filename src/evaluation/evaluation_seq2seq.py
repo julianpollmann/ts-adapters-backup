@@ -51,7 +51,6 @@ def main(data_args: argparse.Namespace):
         # )
         model.config.forced_bos_token_id = tokenizer.lang_code_to_id[lang]
 
-
     if data_args.adapter_path:
         adapter_name = model.load_adapter(data_args.adapter_path, config="pfeiffer")
         model.set_active_adapters(adapter_name)
@@ -76,7 +75,7 @@ def main(data_args: argparse.Namespace):
     test_ds = dataset["test"].map(preprocess_function, remove_columns=column_names, batched=True)
     test_ds.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 
-    #bleu = load("bleu")
+    # bleu = load("bleu")
     ter = load("ter")
 
     def compute_metrics(eval_pred):
@@ -88,17 +87,18 @@ def main(data_args: argparse.Namespace):
         decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
         decoded_inputs = tokenizer.batch_decode(inputs, skip_special_tokens=True)
 
-        #bleu_score = bleu.compute(predictions=decoded_preds, references=decoded_labels)
+        # bleu_score = bleu.compute(predictions=decoded_preds, references=decoded_labels)
         ter_score = ter.compute(predictions=decoded_preds, references=decoded_labels, case_sensitive=True)
-        #sari_score = corpus_sari(orig_sents=decoded_inputs, sys_sents=decoded_preds, refs_sents=[decoded_labels])
-        #fkgl_score = corpus_fkgl(sentences=decoded_preds)
+        # sari_score = corpus_sari(orig_sents=decoded_inputs, sys_sents=decoded_preds, refs_sents=[decoded_labels])
+        # fkgl_score = corpus_fkgl(sentences=decoded_preds)
 
         # Write Src/Tgt/Preds to file
         df = pd.DataFrame()
         df["src"] = decoded_inputs
         df["tgt"] = decoded_labels
         df["prediction"] = decoded_preds
-        df.to_json(os.path.join(data_args.output_dir, "predictions.json"))
+        with open(os.path.join(data_args.output_dir, "predictions.json"), "w", encoding="utf-8") as file:
+            df.to_json(file, force_ascii=False)
 
         # Write EASSE HTML Report
         # BLEU, SARI, FKGL are covered by this
@@ -114,10 +114,10 @@ def main(data_args: argparse.Namespace):
         )
 
         return {
-            #"Bleu": bleu_score.get("bleu"),
+            # "Bleu": bleu_score.get("bleu"),
             "TER": ter_score.get("score"),
-            #"SARI": sari_score,
-            #"FKGL": fkgl_score
+            # "SARI": sari_score,
+            # "FKGL": fkgl_score
         }
 
     trainer_args = Seq2SeqTrainingArguments(
