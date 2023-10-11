@@ -99,13 +99,15 @@ def main(data_args: argparse.Namespace):
         with open(os.path.join(data_args.output_dir, "predictions.json"), "w", encoding="utf-8") as file:
             df.to_json(file, force_ascii=False)
 
+        df = df[df["prediction"].str.len() > 0]
+
         # Write EASSE HTML Report
         # BLEU, SARI, FKGL are covered by this
         write_html_report(
             f"{data_args.output_dir}/easse_report.html",
-            orig_sents=decoded_inputs,
-            sys_sents=decoded_preds,
-            refs_sents=[decoded_labels],
+            orig_sents=df["src"].to_list(),
+            sys_sents=df["prediction"].to_list(),
+            refs_sents=[df["tgt"].to_list()],
             test_set="custom",
             lowercase=True,
             tokenizer="13a",
@@ -123,8 +125,7 @@ def main(data_args: argparse.Namespace):
 
     trainer_args = Seq2SeqTrainingArguments(
         output_dir=data_args.output_dir,
-        per_device_train_batch_size=8,
-        per_device_eval_batch_size=8,
+        auto_find_batch_size=True,
         predict_with_generate=True,
         include_inputs_for_metrics=True,
         fp16=True,
