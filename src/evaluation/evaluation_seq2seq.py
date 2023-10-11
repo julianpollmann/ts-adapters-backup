@@ -75,7 +75,6 @@ def main(data_args: argparse.Namespace):
     test_ds = dataset["test"].map(preprocess_function, remove_columns=column_names, batched=True)
     test_ds.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 
-    # bleu = load("bleu")
     ter = load("ter")
 
     def compute_metrics(eval_pred):
@@ -113,11 +112,13 @@ def main(data_args: argparse.Namespace):
             metrics=DEFAULT_METRICS,
         )
 
+        # Compute proportion of predictions, which are exaclty like the complex source
+        df_equal = df[df["src"] == df["prediction"]]
+        non_modified_sentences = round(len(df_equal.index) / len(df), 2)
+
         return {
-            # "Bleu": bleu_score.get("bleu"),
             "TER": ter_score.get("score"),
-            # "SARI": sari_score,
-            # "FKGL": fkgl_score
+            "NON_MODIFIED": non_modified_sentences,
         }
 
     trainer_args = Seq2SeqTrainingArguments(
