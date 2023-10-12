@@ -12,7 +12,7 @@ from transformers import (
     MBartTokenizer,
     MBartTokenizerFast,
     MBart50Tokenizer,
-    MBart50TokenizerFast
+    MBart50TokenizerFast, EarlyStoppingCallback
 )
 from transformers.adapters import AdapterConfig
 
@@ -107,20 +107,20 @@ def main(data_args: argparse.Namespace):
 
     training_args = Seq2SeqTrainingArguments(
         output_dir=data_args.output_dir,
-        remove_unused_columns=False,
+        remove_unused_columns=True,
         evaluation_strategy="steps",
         logging_strategy="steps",
         per_device_train_batch_size=data_args.batch_size,
         per_device_eval_batch_size=data_args.batch_size,
         learning_rate=data_args.learning_rate,
         max_steps=data_args.steps,
-        save_total_limit=3,
-        optim='adamw_torch',
+        save_total_limit=5,
+        optim="adamw_torch",
         fp16=True,
-        eval_steps=500,
-        logging_steps=500,
+        eval_steps=100,
+        logging_steps=100,
         weight_decay=0.01,
-        # gradient_accumulation_steps=4
+        load_best_model_at_end=True,
     )
 
     trainer = Seq2SeqAdapterTrainer(
@@ -130,6 +130,7 @@ def main(data_args: argparse.Namespace):
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         tokenizer=tokenizer,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=5)],
     )
 
     train_result = trainer.train()
@@ -151,13 +152,13 @@ if __name__ == "__main__":
                                      description='Finetuning Text Simplification')
     parser.add_argument('output_dir', type=str, help='Output dir to store trained checkpoints')
     parser.add_argument('dataset', type=str, help='Name of the dataset in Huggingface Datasets format')
-    parser.add_argument('--checkpoint', type=str, nargs=1, default='facebook/bart-large',
+    parser.add_argument("--checkpoint", type=str, default="facebook/mbart-large-50",
                         help='Model Checkpoint, can be either a pretrained model or a own checkpoint.')
     parser.add_argument('--steps', type=int, default=400, help='Number of steps to train')
     parser.add_argument('--max_input_length', type=int, default=1024,
                         help='Max input length of tokenized text. Defaults to 1024')
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size')
-    parser.add_argument("--reduction_factor", type=int, default=16)
+    parser.add_argument("--reduction_factor", type=int, default=2)
     parser.add_argument("--learning_rate", type=str, default=2e-5)
     parser.add_argument("--adapter_config", type=str, default="pfeiffer")
     parser.add_argument("--language", type=str, default=None)
