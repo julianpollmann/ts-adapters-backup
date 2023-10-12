@@ -10,7 +10,8 @@ from transformers import (
     MBartTokenizer,
     MBartTokenizerFast,
     MBart50Tokenizer,
-    MBart50TokenizerFast
+    MBart50TokenizerFast,
+    EarlyStoppingCallback
 )
 
 MULTILINGUAL_TOKENIZERS = [MBartTokenizer, MBartTokenizerFast, MBart50Tokenizer, MBart50TokenizerFast]
@@ -35,8 +36,7 @@ def main(data_args: argparse.Namespace):
     )
 
     if isinstance(tokenizer, tuple(MULTILINGUAL_TOKENIZERS)):
-        lang = LANGUAGE_MAPPING.get(data_args.language) if data_args.language is not None else LANGUAGE_MAPPING.get(
-            "en")
+        lang = LANGUAGE_MAPPING.get(data_args.language) if data_args.language is not None else LANGUAGE_MAPPING.get("en")
 
         tokenizer.src_lang = lang
         tokenizer.tgt_lang = lang
@@ -78,14 +78,13 @@ def main(data_args: argparse.Namespace):
         per_device_eval_batch_size=data_args.batch_size,
         learning_rate=data_args.learning_rate,
         max_steps=data_args.steps,
-        save_total_limit=3,
+        save_total_limit=5,
         optim="adamw_torch",
-        # predict_with_generate=True,
-        # include_inputs_for_metrics=True,
         fp16=True,
         eval_steps=100,
         logging_steps=100,
         weight_decay=0.01,
+        load_best_model_at_end=True
     )
 
     trainer = Seq2SeqTrainer(
@@ -95,6 +94,7 @@ def main(data_args: argparse.Namespace):
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         tokenizer=tokenizer,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=5)],
     )
 
     train_result = trainer.train()
