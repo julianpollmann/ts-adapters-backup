@@ -7,6 +7,7 @@ from transformers import (
     DataCollatorForSeq2Seq,
     Seq2SeqTrainingArguments,
     Seq2SeqTrainer,
+    EarlyStoppingCallback,
 )
 
 
@@ -19,7 +20,12 @@ def main(data_args: argparse.Namespace):
             valid_data.append(load_dataset(data_args.dataset, name=language, split="validation"))
 
     if data_args.few_shot_language:
-        train_data.append(load_dataset(data_args.dataset, name=data_args.few_shot_language, split="train[:10%]"))
+        few_shot = load_dataset(
+            data_args.dataset,
+            name=data_args.few_shot_language,
+            split=f"train[:{data_args.few_shot_size}%]"
+        )
+        train_data.append(few_shot)
         valid_data.append(load_dataset(data_args.dataset, name=data_args.few_shot_language, split="validation"))
 
     dataset = DatasetDict({"train": concatenate_datasets(train_data), "validation": concatenate_datasets(train_data)})
@@ -63,14 +69,13 @@ def main(data_args: argparse.Namespace):
         per_device_eval_batch_size=data_args.batch_size,
         learning_rate=data_args.learning_rate,
         max_steps=data_args.steps,
-        save_total_limit=3,
+        save_total_limit=5,
         optim="adamw_torch",
-        #predict_with_generate=True,
-        #include_inputs_for_metrics=True,
         fp16=True,
-        eval_steps=1000,
-        logging_steps=1000,
+        eval_steps=250,
+        logging_steps=250,
         weight_decay=0.01,
+        load_best_model_at_end=True,
     )
 
     trainer = Seq2SeqTrainer(
@@ -80,6 +85,7 @@ def main(data_args: argparse.Namespace):
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         tokenizer=tokenizer,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=5)]
     )
 
     train_result = trainer.train()
@@ -110,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
     parser.add_argument("--training_languages", type=str, nargs='+')
     parser.add_argument("--few_shot_language", type=str, default=None)
+    parser.add_argument("--few_shot_size", type=str, default="10")
     parser.add_argument("--learning_rate", type=str, default=2e-5)
 
     main(data_args=parser.parse_args())
