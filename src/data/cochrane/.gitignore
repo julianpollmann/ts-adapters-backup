@@ -2,3 +2,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+aligned_data/
+LASER/
+processed_data/
+scraped_data/
+logs/
+final_data/
