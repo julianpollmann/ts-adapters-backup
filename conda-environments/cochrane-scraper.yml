@@ -1,4 +1,4 @@
-name: ts-cochrane-scraper
+name: cochrane-scraper
 channels:
   - conda-forge
   - pytorch
