@@ -95,7 +95,7 @@ def main(align_lang):
     df_alignments = pd.concat(frames)
     df_alignments.head()
 
-    if lang == "fa":
+    if align_lang == "fa":
         print("-" * 50)
         print("FARSI")
         ENCODER_MODEL = embed.SentenceEncoder(
@@ -138,15 +138,15 @@ def main(align_lang):
                 token_lang=src_lang,
                 spm_model="/homes/julez/ts-adapters/src/data/cochrane/LASER/laser2.spm",
                 output=src_emb,
-                verbose=False,
+                verbose=True,
             )
 
             # Farsi needs a different spm model and language code
-            if tgt_lang == "fa":
-                spm_model = "/homes/julez/ts-adapters/src/data/cochrane/LASER/laser3-pes_Arab.v1.spm"
-                tgt_lang = "pes_Arab"
-            else:
-                spm_model = "/homes/julez/ts-adapters/src/data/cochrane/LASER/laser2.spm"
+            #if tgt_lang == "fa":
+            #    spm_model = "/homes/julez/ts-adapters/src/data/cochrane/LASER/laser3-pes_Arab.v1.spm"
+            #    tgt_lang = "pes_Arab"
+            #else:
+            #    spm_model = "/homes/julez/ts-adapters/src/data/cochrane/LASER/laser2.spm"
 
             embed.embed_sentences(
                 ifname=tgt_file,
@@ -155,7 +155,7 @@ def main(align_lang):
                 spm_model=spm_model,
                 spm_lang=tgt_lang,
                 output=tgt_emb,
-                verbose=False,
+                verbose=True,
             )
 
             src_sent2line, src_line_embeddings = dp_utils.read_in_embeddings(src_file, src_emb)
