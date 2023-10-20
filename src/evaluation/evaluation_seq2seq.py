@@ -116,7 +116,7 @@ def main(data_args: argparse.Namespace):
 
         # Compute proportion of predictions, which are exaclty like the complex source
         df_equal = df[df["src"] == df["prediction"]]
-        non_modified_sentences = round(len(df_equal.index) / len(df), 2)
+        non_modified_sentences = round((len(df_equal.index) / len(df) * 100), 2)
 
         return {
             "TER": ter_score.get("score"),
