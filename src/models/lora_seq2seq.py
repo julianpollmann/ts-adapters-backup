@@ -132,6 +132,7 @@ def main(data_args: argparse.Namespace, ds_train=None, ds_valid=None):
     metrics["total_flos"] = trainer.state.total_flos
     metrics["model_params"] = all_params
     metrics["trainable_params"] = trainable_params
+    metrics["trainable_params_share"] = round((trainable_params / all_params) * 100, 2)
 
     trainer.log_metrics(split="train", metrics=metrics)
     trainer.save_metrics(split="train", metrics=metrics)
@@ -144,7 +145,7 @@ if __name__ == "__main__":
     parser.add_argument("output_dir", type=str, help="Output dir to store trained checkpoints")
     parser.add_argument("dataset", type=str, help="Name of the dataset in Huggingface Datasets format")
     parser.add_argument("--checkpoint", type=str, default="facebook/mbart-large-50",
-                        help="Model Checkpoint, can be either a pretrained model or a own checkpoint. Defaults to bart-base.")
+                        help="Model Checkpoint, can be either a pretrained model or a own checkpoint. Defaults to mbart-large-50.")
     parser.add_argument("--steps", type=int, default=400, help="Number of steps to train")
     parser.add_argument("--max_input_length", type=int, default=1024,
                         help="Max input length of tokenized text. Defaults to 1024")
@@ -152,7 +153,6 @@ if __name__ == "__main__":
                         help="Max target length of tokenized text. Defaults to 1024")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
     parser.add_argument("--language", type=str, default=None)
-    parser.add_argument("--max_train_samples", type=int)
     parser.add_argument("--learning_rate", type=float, default=2e-5)
     parser.add_argument("--rank", type=int, default=8)
     parser.add_argument("--lora_alpha", type=int, default=32)
