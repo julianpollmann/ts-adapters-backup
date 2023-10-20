@@ -35,7 +35,7 @@ class CochranePara(datasets.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
         generator = []
-        file_train = dl_manager.download(os.path.join(self.config.name, "train.csv"))
+        file_train = dl_manager.download(os.path.join(self.config.name, "train_filtered.csv"))
         file_test = dl_manager.download(os.path.join(self.config.name, "test.csv"))
         file_eval = dl_manager.download(os.path.join(self.config.name, "valid.csv"))
 
@@ -80,15 +80,3 @@ class CochranePara(datasets.GeneratorBasedBuilder):
                 "src": row["src"],
                 "tgt": row["tgt"]
             }
-
-
-        # with open(filepath, "r", encoding="utf-8") as f:
-        #     csv_reader = csv.reader(f, delimiter=',')
-        #     next(csv_reader)
-        #
-        #     for key, row in enumerate(csv_reader):
-        #         yield key, {
-        #             "doi": row[4],
-        #             "src": row[2],
-        #             "tgt": row[3],
-        #         }
