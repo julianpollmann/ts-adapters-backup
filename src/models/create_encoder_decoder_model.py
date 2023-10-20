@@ -5,22 +5,31 @@ from transformers import EncoderDecoderModel, AutoTokenizer
 
 def main(data_args):
     tokenizer = AutoTokenizer.from_pretrained(data_args.checkpoint)
-    model = EncoderDecoderModel.from_encoder_decoder_pretrained(data_args.checkpoint, data_args.checkpoint)
+    model = EncoderDecoderModel.from_encoder_decoder_pretrained(
+        data_args.checkpoint,
+        data_args.checkpoint,
+        tie_encoder_decoder=True
+    )
 
     # Set special tokens
-    model.config.decoder_start_token_id = tokenizer.cls_token_id
-    model.config.eos_token_id = tokenizer.sep_token_id
+    model.config.decoder_start_token_id = tokenizer.bos_token_id
+    model.config.eos_token_id = tokenizer.eos_token_id
     model.config.pad_token_id = tokenizer.pad_token_id
-    model.config.vocab_size = model.config.encoder.vocab_size
+    model.config.vocab_size = model.config.decoder.vocab_size
+
+    # This is new
+    bad_words = ['[CLS]']
+    bad_words_ids = [tokenizer.vocab[token] for token in bad_words]
+    model.config.bad_words_ids = [bad_words_ids]
 
     # Model Configs from BART
     # See https://colab.research.google.com/drive/1WIk2bxglElfZewOHboPFNj8H44_VAyKE?usp=sharing#scrollTo=t004XKklvU6q
-    model.config.max_length = data_args.max_length
-    model.config.min_length = data_args.min_length
-    model.config.no_repeat_ngram_size = 3
-    model.config.early_stopping = True
-    model.config.length_penalty = 2.0
-    model.config.num_beams = 4
+    # model.config.max_length = data_args.max_length
+    # model.config.min_length = data_args.min_length
+    # model.config.no_repeat_ngram_size = 3
+    # model.config.early_stopping = True
+    # model.config.length_penalty = 2.0
+    # model.config.num_beams = 4
 
     model.save_pretrained(data_args.output)
 
