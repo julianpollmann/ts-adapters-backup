@@ -17,6 +17,10 @@ After dataset creation, these can be loaded with the Huggingface datasets librar
 `ds = load_dataset(data_args.dataset, name=[SOME_LANGUAGE])`\
 Leaving out the name parameter will load the English dataset.
 
+Available datasets are:
+* Newsela - `load_dataset("newsela")`
+* MultiCochrane - `load_dataset("cochrane_multi_sent")`
+
 
 ## Training
 All training scripts are located in `src/models`
