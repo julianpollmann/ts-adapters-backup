@@ -1,4 +1,4 @@
-name: finetuning
+name: peft
 channels:
   - conda-forge
   - pytorch
@@ -10,23 +10,17 @@ dependencies:
   - pip
   - jupyter
   - scikit-learn
-  - pytorch==2.0.1
+  - pytorch
   - pytorch-cuda=11.7
   - pip:
     - transformers
+    - peft
     - tqdm
     - ipywidgets
     - numpy
     - pandas
     - datasets
-    - textstat
-    - nltk
-    - matplotlib
-    - seaborn
-    - hazm
-    - evaluate
     - accelerate
+    - evaluate
     - git+https://github.com/feralvam/easse.git
     - sentencepiece
-    - spacy
-    - spacy-transformers

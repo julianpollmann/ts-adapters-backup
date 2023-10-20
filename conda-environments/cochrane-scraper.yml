@@ -13,3 +13,9 @@ dependencies:
   - nltk=3.7
   - hazm
   - spacy
+  - cython
+  - fairseq
+  - pandas
+  - transliterate
+  - numpy
+  - mcerp
