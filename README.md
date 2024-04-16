@@ -10,7 +10,7 @@ There are 5 different environments: `cochrane-scraper`, `data-description`, `fin
 ## Datasets
 Datasets are located in `src/data`
 
-The cochrane folder contains the scraper for the Cochrane library. It contains a seperate README how to use the scraper.
+The Cochrane folder contains the scraper for the Cochrane library. It contains a seperate README how to use the scraper.
 The Newsela folder contains a scripts to process the Newsela dataset with a seperate README.
 
 After dataset creation, these can be loaded with the Huggingface datasets library:\
